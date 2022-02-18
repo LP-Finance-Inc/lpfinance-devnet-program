@@ -62,7 +62,7 @@ pub mod tokens {
 
     pub fn token_transfer(
         ctx:Context<TokenTransfer>,
-        amount: u64 // amount to mint
+        amount: u64 // amount to transfer
     ) -> ProgramResult {
         msg!("TOKEN Transfer");
 
@@ -75,6 +75,25 @@ pub mod tokens {
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
         token::transfer(cpi_ctx, amount)?;
+
+        Ok(())
+    }
+
+    pub fn token_burn(
+        ctx:Context<TokenBurn>,
+        amount: u64 // amount to burn
+    ) -> ProgramResult {
+        msg!("TOKEN Transfer");
+
+        let cpi_accounts = Burn {
+            mint: ctx.accounts.user_lptoken.to_account_info(),
+            to: ctx.accounts.to_lptoken.to_account_info(),
+            authority: ctx.accounts.user_authority.to_account_info()
+        };
+
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        token::burn(cpi_ctx, amount)?;
 
         Ok(())
     }
@@ -133,6 +152,40 @@ pub struct TokenMintTo<'info> {
 
 #[derive(Accounts)]
 pub struct TokenTransfer<'info> {
+    #[account(mut)]
+    pub user_authority: Signer<'info>,
+    #[account(
+        init_if_needed,
+        payer = user_authority,
+        associated_token::mint = lptoken_mint,
+        associated_token::authortiy = user_authority,
+        space = 8 + 42
+    )]
+    pub user_lptoken: Box<Account<'info, TokenAccount>>,
+    #[account(
+        init_if_needed,
+        payer = user_authority,
+        associated_token::mint = lptoken_mint,
+        associated_token::authortiy = user_authority,
+        space = 8 + 42
+    )]
+    pub to_lptoken: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub lptoken_mint: Account<'info, Mint>,
+    #[account(mut, 
+        seeds = [lptoken_account.token_title.as_ref().trim_ascii_whitespace()],
+        bump = lp_token_account.bumps.lptoken_account,
+        has_one = lptoken_mint
+    )]
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub rent: Sysvar<'info, Rent>
+}
+
+#[derive(Accounts)]
+pub struct TokenBurn<'info> {
     #[account(mut)]
     pub user_authority: Signer<'info>,
     #[account(
