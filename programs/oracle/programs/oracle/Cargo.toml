@@ -1,12 +1,12 @@
 [package]
-name = "tokens"
+name = "oracle"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2018"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "tokens"
+name = "oracle"
 
 [features]
 no-entrypoint = []
@@ -16,8 +16,4 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = "0.21.0"
-anchor-spl = "0.21.0"
-spl-token = "3.2.0"
-solana-program = "1.8.11"
-nom = "7"
+anchor-lang = "0.19.0"
