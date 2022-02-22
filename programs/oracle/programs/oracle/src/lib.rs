@@ -230,7 +230,7 @@ pub mod oracle {
 
         let btc_price = pyth_price.agg.price as u64;
 
-        total_price += btc_price * user_account.btc_amount * LTV / DOMINATOR;
+        total_price += btc_price * user_account.btc_amount;
 
         // SOL price
         let pyth_price_info = &ctx.accounts.pyth_sol_account;
@@ -248,16 +248,16 @@ pub mod oracle {
 
         let usdc_price = pyth_price.agg.price as u64;
         // We think LTV as 100% because of same kind of assets
-        total_price += usdc_price * user_account.usdc_amount;
+        total_price += usdc_price * user_account.usdc_amount * LTV / DOMINATOR;
 
         // LpUSD price
         // We think LTV as 100% because of same kind of assets
         let lpusd_price = usdc_price;        
-        total_price += lpusd_price * user_account.lpusd_amount;
+        total_price += lpusd_price * user_account.lpusd_amount * LTV / DOMINATOR;
 
         // LpBTC price
         let lpbtc_price = btc_price;
-        total_price += lpbtc_price * user_account.lpbtc_amount * LTV / DOMINATOR;
+        total_price += lpbtc_price * user_account.lpbtc_amount;
 
         let &mut borrow_value = lpbtc_price * amount;
 
