@@ -23,7 +23,7 @@ pub mod oracle {
         Ok(())
     }
 
-    pub fn deposit_btc(
+    pub fn deposit_collateral(
         ctx: Context<DepositCollateral>,
         amount: u64
     )-> ProgramResult {
