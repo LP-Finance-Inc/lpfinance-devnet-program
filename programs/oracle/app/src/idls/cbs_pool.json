@@ -1,0 +1,383 @@
+{
+  "version": "0.0.0",
+  "name": "cbs_pool",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "storeAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "storeAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "seededMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "poolSeeded",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "programTitle",
+          "type": "string"
+        },
+        {
+          "name": "bumps",
+          "type": {
+            "defined": "PoolBumps"
+          }
+        }
+      ]
+    },
+    {
+      "name": "initStakeAccount",
+      "accounts": [
+        {
+          "name": "stakeAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "storeAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "storeAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        },
+        {
+          "name": "seed0",
+          "type": "string"
+        },
+        {
+          "name": "seed1",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "enterStaking",
+      "accounts": [
+        {
+          "name": "userAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "userSeeded",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "seededMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "storeAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolSeeded",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "startUnstaking",
+      "accounts": [
+        {
+          "name": "userAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "userSeeded",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "seededMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "storeAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolSeeded",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "harvest",
+      "accounts": [
+        {
+          "name": "userAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "userSeeded",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "seededMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "storeAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolSeeded",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "StoreAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "programTitle",
+            "type": {
+              "array": [
+                "u8",
+                10
+              ]
+            }
+          },
+          {
+            "name": "bumps",
+            "type": {
+              "defined": "PoolBumps"
+            }
+          },
+          {
+            "name": "storeAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "seededMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "poolSeeded",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeInfoAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "stakedAmount",
+            "type": "u64"
+          },
+          {
+            "name": "earnedAmount",
+            "type": "u64"
+          },
+          {
+            "name": "lastStakeTs",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "PoolBumps",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "storeAccount",
+            "type": "u8"
+          },
+          {
+            "name": "poolSeeded",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 300,
+      "name": "ZeroSeeded",
+      "msg": "Zero amount"
+    },
+    {
+      "code": 301,
+      "name": "EmptySeeded",
+      "msg": "NO WITHDRAWABLE SEEDED"
+    },
+    {
+      "code": 302,
+      "name": "NoEnoughPool",
+      "msg": "POOL IS NOT ENOUGH TO WITHDRAWAL OR HARVEST"
+    },
+    {
+      "code": 303,
+      "name": "NoEnoughHarvest",
+      "msg": "POOL IS NOT ENOUGH TO HARVEST"
+    },
+    {
+      "code": 304,
+      "name": "LowWithdraw",
+      "msg": "Insufficient withdrawal tokens"
+    },
+    {
+      "code": 305,
+      "name": "NoStaked",
+      "msg": "NO STAKED"
+    },
+    {
+      "code": 306,
+      "name": "LowSeeded",
+      "msg": "Insufficient SEEDED"
+    },
+    {
+      "code": 307,
+      "name": "FailedInit",
+      "msg": "Initialize Stake Account Failed"
+    },
+    {
+      "code": 308,
+      "name": "LowRedeemable",
+      "msg": "Insufficient redeemable tokens"
+    },
+    {
+      "code": 309,
+      "name": "SeededNotEqRedeem",
+      "msg": "SEEDED total and redeemable total don't match"
+    }
+  ],
+  "metadata": {
+    "address": "HWJiQ61uFie8iQqSH3P76ukWYZEvwLJj29RwQZY48C33"
+  }
+}

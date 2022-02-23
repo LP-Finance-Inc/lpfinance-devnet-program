@@ -10,7 +10,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 // Mainnet-beta data
 const BTC_MINT:Pubkey = new Pubkey('9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E');
 const USDC_MINT:Pubkey = new Pubkey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
-const LpBTC_MINT:Pubkey = new Pubkey('9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E');
+const LpSOL_MINT:Pubkey = new Pubkey('9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E');
 const LpUSD_MINT:Pubkey = new Pubkey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
 
 const LTV:u64 = 85;
@@ -34,8 +34,8 @@ pub mod oracle {
         }
 
         let cpi_accounts = Transfer {
-            from: ctx.accounts.collateral_pool.to_account_info(),
-            to: ctx.accounts.user_collateral.to_account_info(),
+            from: ctx.accounts.user_collateral.to_account_info(),
+            to: ctx.accounts.collateral_pool.to_account_info(),
             authority: ctx.accounts.user_authority.to_account_info()
         };
 
@@ -57,8 +57,8 @@ pub mod oracle {
             user_account.lpusd_amount = user_account.lpusd_amount + amount;
         }
 
-        if ctx.accounts.user_collateral.mint == LpBTC_MINT {
-            user_account.lpbtc_amount = user_account.lpbtc_amount + amount;
+        if ctx.accounts.user_collateral.mint == LpSOL_MINT {
+            user_account.lpsol_amount = user_account.lpsol_amount + amount;
         }
 
         Ok(())
@@ -70,20 +70,20 @@ pub mod oracle {
     ) -> ProgramResult {
         msg!("Deposit SOL");
 
-        if **ctx.accounts.user_sol.lamports.borrow() < amount {
+        if **ctx.accounts.user_signer.lamports.borrow() < amount {
             msg!("Insufficient SOL");
             return;
         }
 
         invoke(
             &system_instruction::transfer(
-                ctx.accounts.user_sol.key,
-                ctx.accounts.sol_pool.key,
+                ctx.accounts.user_signer.key,
+                ctx.accounts.collateral_pool.key,
                 amount
             ),
             &[
-                ctx.accounts.user_sol.to_account_info().clone(),
-                ctx.accounts.sol_pool.clone(),
+                ctx.accounts.user_signer.to_account_info().clone(),
+                ctx.accounts.collateral_pool.clone(),
                 ctx.accounts.system_program.clone()
             ]
         )?;
@@ -95,7 +95,7 @@ pub mod oracle {
     }
 
     pub fn borrow_lpusd(
-        ctx: Context<BorrowLpUSD>,
+        ctx: Context<BorrowLpToken>,
         amount: u64
     ) -> ProgramResult {
         msg!("Borrow LpUSD");
@@ -137,8 +137,8 @@ pub mod oracle {
         total_price += lpusd_price * user_account.lpusd_amount;
 
         // LpBTC price
-        let lpbtc_price = btc_price;
-        total_price += lpbtc_price * user_account.lpbtc_amount * LTV / DOMINATOR;
+        let lpsol_price = btc_price;
+        total_price += lpsol_price * user_account.lpsol_amount * LTV / DOMINATOR;
 
         let &mut borrow_value = lpusd_price * amount;
         if total_price > borrow_value {
@@ -163,15 +163,15 @@ pub mod oracle {
                 // Burn with repayment
             }
 
-            // LpBTC
-            if user_account.lpbtc_amount > 0 && borrow_value  > 0 {
-                if lpbtc_price * user_account.lpbtc_amount >= borrow_value * DOMINATOR / LTV {
-                    user_account.lpbtc_amount = user_account.lpbtc_amount - borrow_value / lpbtc_price  * DOMINATOR / LTV;
+            // LpSOL
+            if user_account.lpsol_amount > 0 && borrow_value  > 0 {
+                if lpsol_price * user_account.lpsol_amount >= borrow_value * DOMINATOR / LTV {
+                    user_account.lpsol_amount = user_account.lpsol_amount - borrow_value / lpsol_price  * DOMINATOR / LTV;
 
                     borrow_value = 0;
                 } else {
-                    borrow_value = borrow_value - lpbtc_price * user_account.lpbtc_amount * LTV / DOMINATOR;
-                    user_account.lpbtc_amount = 0;
+                    borrow_value = borrow_value - lpsol_price * user_account.lpsol_amount * LTV / DOMINATOR;
+                    user_account.lpsol_amount = 0;
                 }
             }
 
@@ -213,8 +213,8 @@ pub mod oracle {
         }
     }
 
-    pub fn borrow_lpbtc(
-        ctx: Context<BorrowLpBTC>,
+    pub fn borrow_lpsol(
+        ctx: Context<BorrowLpToken>,
         amount: u64
     ) -> ProgramResult {
         msg!("Borrow LpBTC");
@@ -256,10 +256,10 @@ pub mod oracle {
         total_price += lpusd_price * user_account.lpusd_amount * LTV / DOMINATOR;
 
         // LpBTC price
-        let lpbtc_price = btc_price;
-        total_price += lpbtc_price * user_account.lpbtc_amount;
+        let lpsol_price = btc_price;
+        total_price += lpsol_price * user_account.lpsol_amount;
 
-        let &mut borrow_value = lpbtc_price * amount;
+        let &mut borrow_value = lpsol_price * amount;
 
         if total_price > borrow_value {
             // Mint
@@ -283,15 +283,15 @@ pub mod oracle {
                 // Burn with repayment
             }
 
-            // LpBTC
-            if user_account.lpbtc_amount > 0 && borrow_value  > 0 {
-                if lpbtc_price * user_account.lpbtc_amount >= borrow_value {
-                    user_account.lpbtc_amount = user_account.lpbtc_amount - borrow_value / lpbtc_price;
+            // LpSOL
+            if user_account.lpsol_amount > 0 && borrow_value  > 0 {
+                if lpsol_price * user_account.lpsol_amount >= borrow_value {
+                    user_account.lpsol_amount = user_account.lpsol_amount - borrow_value / lpsol_price;
 
                     borrow_value = 0;
                 } else {
-                    borrow_value = borrow_value - lpbtc_price * user_account.lpbtc_amount;
-                    user_account.lpbtc_amount = 0;
+                    borrow_value = borrow_value - lpsol_price * user_account.lpsol_amount;
+                    user_account.lpsol_amount = 0;
                 }
             }
 
@@ -309,7 +309,7 @@ pub mod oracle {
 
             // SOL
             if user_account.sol_amount > 0 && borrow_value  > 0 {
-                if sol_price * user_account.sol_amount >= borrow_value * DOMINATOR / LTV {
+                if sol_price * user_account.sol_amount >= borrow_value {
                     user_account.sol_amount = user_account.sol_amount - borrow_value / sol_price * DOMINATOR / LTV;
 
                     borrow_value = 0;
@@ -321,12 +321,12 @@ pub mod oracle {
 
             // BTC
             if user_account.btc_amount > 0 && borrow_value  > 0 {
-                if btc_price * user_account.btc_amount >= borrow_value {
-                    user_account.btc_amount = user_account.btc_amount - borrow_value / btc_price;
+                if btc_price * user_account.btc_amount >= borrow_value  * DOMINATOR / LTV {
+                    user_account.btc_amount = user_account.btc_amount - borrow_value / btc_price * DOMINATOR / LTV;
 
                     borrow_value = 0;
                 } else {
-                    borrow_value = borrow_value - btc_price * user_account.btc_amount;
+                    borrow_value = borrow_value - btc_price * user_account.btc_amount * LTV / DOMINATOR;
                     user_account.btc_amount = 0;
                 }
             }
@@ -337,17 +337,129 @@ pub mod oracle {
 #[derive(Accounts)]
 pub struct Initialize {}
 
+#[account]
+#[derive(Default)]
+pub struct UserAccount {
+    pub btc_amount: u64,
+    pub sol_amount: u64,
+    pub usdc_amount: u64,
+    pub lpsol_amount: u64,
+    pub lpusd_amount: u64,
+    pub owner: Pubkey
+}
+
+#[account]
+#[derive(Default)]
+pub struct StateAccount {
+    pub bumps: PoolBumps,
+    pub pool_title: String
+}
+
 #[derive(Accounts)]
-#[instruction(bumps: OracleBumps)]
-pub struct MintLpBtc<'info> {
+#[instruction(bump: u8, seed0: String, seed1: String)]
+pub struct SetUserAccount<'info> {
+    // State account for each user/wallet
+    #[account(
+        init,
+        seeds = [state_account.pool_title.as_ref(), seed0.as_ref(), seed1.as_ref()],
+        bump = bump,
+        payer = user_authority
+    )]
+    pub user_account: Account<'info, UserAccount>,
+    pub state_account: Account<'info, StateAccount>,
+    // Contract Authority accounts
     #[account(mut)]
-    pub user_account: Signer<'info>
+    pub user_authority: Signer<'info>,
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+#[instruction(bumps: PoolBumps)]
+pub struct DepositCollateral<'info> {
+    #[account(mut)]
+    pub user_authority: Signer<'info>,
+    #[account(
+        mut,
+        constraint = user_collateral.owner == user_authority.key(),
+        constraint = user_collateral.mint == collateral_mint.key()
+    )]
+    pub user_collateral : Account<'info,TokenAccount>,
+    #[account(mut)]
+    pub collateral_mint: Account<'info,Mint>,
+    // state account for user's wallet
+    #[account(mut,
+        seeds = [state_account.pool_title.as_ref().trim_ascii_whitespace()],
+        bump= state_account.bumps.state_account
+    )]
+    pub state_account: Box<Account<'info, StateAccount>>,
+    #[account(
+        mut,
+        seeds = [state_account.pool_title.as_ref().trim_ascii_whitespace(), b"collateral_pool".as_ref()],
+        bump = state_account.bumps.collateral_pool)]
+    pub collateral_pool: Account<'info, TokenAccount>,
+    #[account(
+        mut,
+        constraint = user_account.owner == user_authority.key()
+    )]
+    pub user_account: Box<Account<'info, UserAccount>>,
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>
+}
+
+#[derive(Accounts)]
+#[instruction(bumps: PoolBumps)]
+pub struct DepositSOL<'info> {
+    #[account(mut)]
+    pub user_signer: Signer<'info>,
+    #[account(mut,
+        seeds = [state_account.pool_title.as_ref().trim_ascii_whitespace()],
+        bump= state_account.bumps.state_account
+    )]
+    pub state_account: Box<Account<'info, StateAccount>>,
+    // state account for user's wallet
+    #[account(
+        mut,
+        constraint = user_account.owner == user_signer.key()
+    )]
+    pub user_account: Box<Account<'info, UserAccount>>,
+    #[account(
+        mut,
+        seeds = [state_account.pool_title.as_ref().trim_ascii_whitespace(), b"collateral_pool".as_ref()],
+        bump = state_account.bumps.collateral_pool)]
+    pub collateral_pool: Account<'info, TokenAccount>,
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>
+}
+
+#[derive(Accounts)]
+pub struct BorrowLpToken<'info> {
+    #[account(mut)]
+    pub user_authority: Signer<'info>,
+    // state account for user's wallet
+    #[account(
+        mut,
+        constraint = user_account.owner == user_authority.key()
+    )]
+    pub user_account: Box<Account<'info, UserAccount>>,
+    pub pyth_btc_account: AccountInfo<'info>,
+    pub pyth_usdc_account: AccountInfo<'info>,
+    pub pyth_sol_account: AccountInfo<'info>,
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Default, Clone)]
-pub struct OracleBumps{
-    pub lptoken_account: u8,
-    pub lptoken_mint: u8
+pub struct PoolBumps{
+    pub state_account: u8,
+    pub collateral_pool: u8
 }
 
 #[error]
