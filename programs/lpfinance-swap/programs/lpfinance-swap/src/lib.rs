@@ -16,7 +16,7 @@ pub mod lpfinance_swap {
         swap_name: String,
         bumps: SwapBumps,
     ) -> Result<()> {
-        msg!("INITIALIZE PROTOCAL");
+        msg!("INITIALIZE SWAP");
 
         let state_account = &mut ctx.accounts.state_account;
 
