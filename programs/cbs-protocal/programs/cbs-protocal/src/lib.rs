@@ -5,7 +5,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token::{self, Mint, MintTo, Transfer, Token, TokenAccount }
 };
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("FURTQbwZCqybpnWA5F3zGP82RgZwp4Jw4JSPziY6V2yH");
 
 const LP_TOKEN_DECIMALS: u8 = 9;
 
@@ -34,6 +34,8 @@ pub mod cbs_protocal {
         state_account.usdc_mint = ctx.accounts.usdc_mint.key();
         state_account.lpusd_mint = ctx.accounts.lpusd_mint.key();
         state_account.lpsol_mint = ctx.accounts.lpsol_mint.key();
+        state_account.pool_btc = ctx.accounts.pool_btc.key();
+        state_account.pool_usdc = ctx.accounts.pool_usdc.key();
         state_account.owner = ctx.accounts.authority.key();
 
         Ok(())
@@ -106,12 +108,12 @@ pub mod cbs_protocal {
         invoke(
             &system_instruction::transfer(
                 ctx.accounts.user_authority.key,
-                ctx.accounts.collateral_pool.to_account_info().key,
+                ctx.accounts.state_account.to_account_info().key,
                 amount
             ),
             &[
                 ctx.accounts.user_authority.to_account_info().clone(),
-                ctx.accounts.collateral_pool.to_account_info().clone(),
+                ctx.accounts.state_account.to_account_info().clone(),
                 ctx.accounts.system_program.to_account_info().clone()
             ]
         )?;
@@ -172,6 +174,13 @@ pub mod cbs_protocal {
         } else {
             borrow_value = borrow_value * lpsol_price;
         }
+
+        msg!("Price SOL: !!{:?}!!", sol_price.to_string());
+        msg!("Price USDC: !!{:?}!!", usdc_price.to_string());
+        msg!("Price BTC: !!{:?}!!", btc_price.to_string());
+
+        msg!("Borrow Value: !!{:?}!!", borrow_value.to_string());
+        msg!("Total Value: !!{:?}!!", total_price.to_string());
 
         if total_price * LTV / DOMINATOR > borrow_value {
             // Mint
@@ -250,8 +259,11 @@ pub mod cbs_protocal {
                     user_account.btc_amount = 0;
                 }
             }
+        } else {
+            return Err(ErrorCode::BorrowFailed.into());
         }
 
+        msg!("LeftCash: !!{:?}!!", borrow_value.to_string());
         if borrow_value > 0 {
             return Err(ErrorCode::BorrowFailed.into());
         }
@@ -276,6 +288,26 @@ pub struct Initialize<'info> {
     
     pub usdc_mint: Box<Account<'info, Mint>>,
     pub btc_mint: Box<Account<'info, Mint>>,
+    // USDC POOL
+    #[account(
+        init,
+        token::mint = usdc_mint,
+        token::authority = state_account,
+        seeds = [protocal_name.as_bytes(), b"pool_usdc".as_ref()],
+        bump,
+        payer = authority
+    )]
+    pub pool_usdc: Account<'info, TokenAccount>,
+    // BTC POOL
+    #[account(
+        init,
+        token::mint = usdc_mint,
+        token::authority = state_account,
+        seeds = [protocal_name.as_bytes(), b"pool_btc".as_ref()],
+        bump,
+        payer = authority
+    )]
+    pub pool_btc: Account<'info, TokenAccount>,
     #[account(init,
         mint::decimals = LP_TOKEN_DECIMALS,
         mint::authority = state_account,
@@ -301,7 +333,7 @@ pub struct Initialize<'info> {
 
 
 #[derive(Accounts)]
-#[instruction(bumps: ProtocalBumps)]
+#[instruction(bumps: ProtocalBumps, pool_bump: u8, pool_seed: String)]
 pub struct DepositCollateral<'info> {
     #[account(mut)]
     pub user_authority: Signer<'info>,
@@ -321,8 +353,8 @@ pub struct DepositCollateral<'info> {
     pub state_account: Box<Account<'info, StateAccount>>,
     #[account(
         mut,
-        seeds = [state_account.protocal_name.as_ref(), b"collateral_pool".as_ref()],
-        bump = state_account.bumps.collateral_pool)]
+        seeds = [state_account.protocal_name.as_ref(), pool_seed.as_ref()],
+        bump = pool_bump)]
     pub collateral_pool: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
@@ -352,11 +384,6 @@ pub struct DepositSOL<'info> {
         constraint = user_account.owner == user_authority.key()
     )]
     pub user_account: Box<Account<'info, UserAccount>>,
-    #[account(
-        mut,
-        seeds = [state_account.protocal_name.as_ref(), b"collateral_pool".as_ref()],
-        bump = state_account.bumps.collateral_pool)]
-    pub collateral_pool: Account<'info, TokenAccount>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -444,7 +471,9 @@ pub struct StateAccount {
     pub lpsol_mint: Pubkey,
     pub lpusd_mint: Pubkey,
     pub btc_mint: Pubkey,
-    pub usdc_mint: Pubkey
+    pub usdc_mint: Pubkey,
+    pub pool_btc: Pubkey,
+    pub pool_usdc: Pubkey
 }
 
 #[account]
@@ -462,15 +491,16 @@ pub struct UserAccount {
 #[derive(AnchorSerialize, AnchorDeserialize, Default, Clone)]
 pub struct ProtocalBumps{
     pub state_account: u8,
-    pub collateral_pool: u8,
     pub lpusd_mint: u8,
-    pub lpsol_mint: u8
+    pub lpsol_mint: u8,
+    pub pool_usdc: u8,
+    pub pool_btc: u8,
 }
 
 #[error_code]
 pub enum ErrorCode {
     #[msg("Insufficient Amount")]
     InsufficientAmount,
-    #[msg("Insufficient Amount")]
+    #[msg("Borrow Failed")]
     BorrowFailed
 }
