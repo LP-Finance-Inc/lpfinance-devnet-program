@@ -189,7 +189,7 @@ pub mod cbs_protocal {
             let cpi_program = ctx.accounts.token_program.to_account_info();
             let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
 
-            token::mint_to(cpi_ctx, amount);
+            token::mint_to(cpi_ctx, amount)?;
 
             // LpUSD
             if user_account.lpusd_amount > 0 && borrow_value  > 0 {
@@ -250,6 +250,10 @@ pub mod cbs_protocal {
                     user_account.btc_amount = 0;
                 }
             }
+        }
+
+        if borrow_value > 0 {
+            return Err(ErrorCode::BorrowFailed.into());
         }
 
         Ok(())
@@ -466,5 +470,7 @@ pub struct ProtocalBumps{
 #[error_code]
 pub enum ErrorCode {
     #[msg("Insufficient Amount")]
-    InsufficientAmount
+    InsufficientAmount,
+    #[msg("Insufficient Amount")]
+    BorrowFailed
 }
