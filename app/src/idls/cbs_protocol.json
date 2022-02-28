@@ -193,6 +193,14 @@
         {
           "name": "amount",
           "type": "u64"
+        },
+        {
+          "name": "poolBump",
+          "type": "u8"
+        },
+        {
+          "name": "poolSeed",
+          "type": "string"
         }
       ]
     },

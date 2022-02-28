@@ -10,26 +10,33 @@ const NETWORK = 'https://api.devnet.solana.com';
 
 // 2022-02-26 devnet
 // ProgramID 3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM
-// State-Account: F9vXpb1rZMo5KBzqW75qSNmui3fmm541DnbbrNg8V86H
-// Pool-USDC: ARE3C71vYjsDYz5tktmKGrThXz2xSToZq4tpubwdMvN4
-// Pool-BTC: 5CxW564g1phyvsCLyWaBETTpZPZ2UVBaX1soyBPXH5Ca
-// LpSOL-Mint: HaWUK6pPMPfXmNjv859Npcrew8K9YaoG2FHVMKzKUxTr
-// LpUSD-Mint: 6Ubj5ELftovPDg3YrzcWrJxS5WA29tUzbXzYaL8AKR3x
+// State-Account: EvFeLhQYAjUgg992feVFdAogHKnb8wdKZBKmYA1XyBY7
+// Pool-USDC: AkCsz9jBudmPKN47rFS16RZQo3rJ7xkvVAkYJpDwYM9V
+// Pool-BTC: HrkssFAVtEdky7SZtj5U8nbF1dvGagvs5Wwi7aUKgF4K
+// LpSOL-Mint: BPxhUPCcuJ51ugnTFtK6H8xcZu5QiGeC7DtCdYiyyfrM
+// LpUSD-Mint: 7LrqbpCQhVFDJD3X3k6HzgYAtpZe4be7biTDBWrZi2Qs
 // Bumps {
-//   stateAccount: 253,
-//   lpusdMint: 253,
+//   stateAccount: 255,
+//   lpusdMint: 255,
 //   lpsolMint: 255,
 //   poolUsdc: 255,
 //   poolBtc: 255
 // }
 
-const stateAccount = new PublicKey("F9vXpb1rZMo5KBzqW75qSNmui3fmm541DnbbrNg8V86H");
+const bumps = {
+    stateAccount: 255,
+    lpusdMint: 255,
+    lpsolMint: 255,
+    poolUsdc: 255,
+    poolBtc: 255
+}
+const stateAccount = new PublicKey("EvFeLhQYAjUgg992feVFdAogHKnb8wdKZBKmYA1XyBY7");
 const usdcMint = new PublicKey("2Q1WAAgnpEox5Y4b6Y8YyXVwFNhDdGot467XfvdBJaPf");
 const btcMint = new PublicKey("Hv96pk4HkhGcbNxkBvb7evTU88KzedvgVy2oddBB1ySB");
 const poolUsdc = new PublicKey("ARE3C71vYjsDYz5tktmKGrThXz2xSToZq4tpubwdMvN4");
 const poolBtc = new PublicKey("5CxW564g1phyvsCLyWaBETTpZPZ2UVBaX1soyBPXH5Ca");
-const lpsolMint = new PublicKey("HaWUK6pPMPfXmNjv859Npcrew8K9YaoG2FHVMKzKUxTr");
-const lpusdMint = new PublicKey("6Ubj5ELftovPDg3YrzcWrJxS5WA29tUzbXzYaL8AKR3x");
+const lpsolMint = new PublicKey("BPxhUPCcuJ51ugnTFtK6H8xcZu5QiGeC7DtCdYiyyfrM");
+const lpusdMint = new PublicKey("7LrqbpCQhVFDJD3X3k6HzgYAtpZe4be7biTDBWrZi2Qs");
 
 // ======> PYTH
 const pythBtcAccount = new PublicKey("HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J"); // 3m1y5h2uv7EQL3KaJZehvAJa4yDNvgc5yAdL9KPMKwvk
@@ -37,7 +44,7 @@ const pythUsdcAccount = new PublicKey("5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KX
 const pythSolAccount = new PublicKey("J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix"); // 3Mnn2fX6rQyUsyELYms1sBJyChWofzSNRoqYzvgMVz5E
 // ======> PYTH
 
-const protocol_name = "cbs_pool";
+const protocol_name = "cbs_pool01";
 const netconfig = "devnet";
 const connection = new anchor.web3.Connection(anchor.web3.clusterApiUrl(netconfig));
 
@@ -227,7 +234,6 @@ export const BorrowComponent = () => {
 
             try {
                 // SOL decimal is 9
-                // so it would be 0.1 SOL
                 const deposit_wei = convert_to_wei(depositAmount);
                 const deposit_amount = new anchor.BN(deposit_wei); // '100000000'
                 console.log("Deposit Amount:", deposit_amount.toString())
@@ -252,8 +258,85 @@ export const BorrowComponent = () => {
         }            
     }
 
-    // borrow LpUSD token
-    const borrowLpUSD = async () => {
+    const deposit_tokens = async (depositTokenName) => {
+        console.log("Start depositing")
+
+        const userAuthority = wallet.publicKey;
+        const provider = await getProvider();
+        anchor.setProvider(provider);
+        // address of deployed program
+        const programId = new PublicKey(idl.metadata.address);    
+        // Generate the program client from IDL.
+        const program = new anchor.Program(idl, programId);
+        
+        const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
+            // [Buffer.from(protocol_name), Buffer.from(seed0), Buffer.from(seed1)],
+            [Buffer.from(protocol_name), Buffer.from(userAuthority.toBuffer())],
+            program.programId
+        );
+
+        let collateralMint = null;
+        let collateralPool = null;
+        let poolBump = null;
+        let poolSeed = null;
+        if (depositTokenName == "lpusd") {
+            collateralMint = lpusdMint;
+            collateralPool = stateAccount;
+            poolBump = 0;
+            poolSeed = "";
+        } else if(depositTokenName == "lpsol") {
+            collateralMint = lpsolMint;
+            collateralPool = stateAccount;
+            poolBump = 0;
+            poolSeed = "";
+        } else if(depositTokenName == "usdc") {
+            collateralMint = usdcMint;
+            collateralPool = poolUsdc;
+            poolBump = bumps.poolUsdc;
+            poolSeed = "pool_usdc";
+        } else if(depositTokenName == "btc") {
+            collateralPool = poolBtc;
+            collateralMint = btcMint;
+            poolBump = bumps.poolBtc;
+            poolSeed = "pool_btc";
+        } else {
+            alert("Invalid");
+        }
+        const userCollateral = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            collateralMint,
+            userAuthority
+        )
+
+        try {
+            const deposit_wei = convert_to_wei(depositAmount);
+            const deposit_amount = new anchor.BN(deposit_wei); // '100000000'
+            console.log("Deposit Amount:", deposit_amount.toString())
+            await program.rpc.depositCollateral(
+                deposit_amount, poolBump, poolSeed, {
+                accounts: {
+                    userAuthority,
+                    stateAccount,
+                    userAccount,
+                    userCollateral,
+                    collateralMint,
+                    collateralPool,
+                    systemProgram: SystemProgram.programId,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    rent: SYSVAR_RENT_PUBKEY
+                }
+            })
+            // await getBalance();
+        } catch (err) {
+            console.log(err);
+        }
+
+        console.log("End transaction")
+    }
+
+    // borrow Lptoken
+    const borrowLpToken = async (isLpUSD) => {
         console.log("Start borrow")
 
         const provider = await getProvider();
@@ -270,12 +353,14 @@ export const BorrowComponent = () => {
             program.programId
         );
         
-        const userLpusd = await Token.getAssociatedTokenAddress(
+        const userLptoken = await Token.getAssociatedTokenAddress(
             ASSOCIATED_TOKEN_PROGRAM_ID,
             TOKEN_PROGRAM_ID,
-            lpusdMint,
+            isLpUSD ? lpusdMint : lpsolMint,
             userAuthority
         )
+
+        const collateralMint = isLpUSD ? lpusdMint : lpsolMint;
 
         let accountData;
         try {
@@ -297,13 +382,13 @@ export const BorrowComponent = () => {
                 console.log("Borrow Amount", borrow_amount.toString(), );
                 console.log("Borrow AmountWei", borrow_wei);
                 
-                await program.rpc.borrowLptoken(true, borrow_amount, {
+                await program.rpc.borrowLptoken(isLpUSD, borrow_amount, {
                     accounts: {
                         userAuthority,
                         userAccount,
                         stateAccount,
-                        userCollateral: userLpusd,
-                        collateralMint: lpusdMint,
+                        userCollateral: userLptoken,
+                        collateralMint,
                         pythBtcAccount,
                         pythUsdcAccount,
                         pythSolAccount,
@@ -334,14 +419,29 @@ export const BorrowComponent = () => {
                 <button onClick={ depositing } >
                     Deposit SOL
                 </button>
+                <button onClick={ () => deposit_tokens("usdc") }>
+                    Deposit USDC
+                </button>
+                <button onClick={ () => deposit_tokens("btc") }>
+                    Deposit BTC
+                </button>
+                <button onClick={ () => deposit_tokens("lpusd") }>
+                    Deposit LpUSD
+                </button>
+                <button onClick={ () => deposit_tokens("lpsol") }>
+                    Deposit LpSOL
+                </button>
             </div>
             <hr />
             <div>
-                <p>Please enter the amount of LpUSD token to borrow</p>
+                <p>Please enter the amount of Lptoken to borrow</p>
                 <input type="text" value={ borrowAmount } onChange={(e) => setBorrowAmount(e.target.value)}/>
             </div>
-            <button onClick={ borrowLpUSD } >
+            <button onClick={() => borrowLpToken(true) } >
                 Request LpUSD Token
+            </button>
+            <button onClick={() => borrowLpToken(false) } >
+                Request LpSOL Token
             </button>
 
             {/* <button onClick={ withdraw } >

@@ -10,7 +10,7 @@ const idl = require("../target/idl/cbs_protocol.json");
 const programID = idl.metadata.address;
 
 console.log("ProgramID", programID);
-const protocol_name = "cbs_pool";
+const protocol_name = "cbs_pool01";
 const pool_usdc = "pool_usdc";
 const pool_btc = "pool_btc";
 const lpsol_mint = "lpsol_mint";
@@ -106,14 +106,14 @@ module.exports = async function (provider) {
 
 // 2022-02-26 devnet
 // ProgramID 3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM
-// State-Account: F9vXpb1rZMo5KBzqW75qSNmui3fmm541DnbbrNg8V86H
-// Pool-USDC: ARE3C71vYjsDYz5tktmKGrThXz2xSToZq4tpubwdMvN4
-// Pool-BTC: 5CxW564g1phyvsCLyWaBETTpZPZ2UVBaX1soyBPXH5Ca
-// LpSOL-Mint: HaWUK6pPMPfXmNjv859Npcrew8K9YaoG2FHVMKzKUxTr
-// LpUSD-Mint: 6Ubj5ELftovPDg3YrzcWrJxS5WA29tUzbXzYaL8AKR3x
+// State-Account: EvFeLhQYAjUgg992feVFdAogHKnb8wdKZBKmYA1XyBY7
+// Pool-USDC: AkCsz9jBudmPKN47rFS16RZQo3rJ7xkvVAkYJpDwYM9V
+// Pool-BTC: HrkssFAVtEdky7SZtj5U8nbF1dvGagvs5Wwi7aUKgF4K
+// LpSOL-Mint: BPxhUPCcuJ51ugnTFtK6H8xcZu5QiGeC7DtCdYiyyfrM
+// LpUSD-Mint: 7LrqbpCQhVFDJD3X3k6HzgYAtpZe4be7biTDBWrZi2Qs
 // Bumps {
-//   stateAccount: 253,
-//   lpusdMint: 253,
+//   stateAccount: 255,
+//   lpusdMint: 255,
 //   lpsolMint: 255,
 //   poolUsdc: 255,
 //   poolBtc: 255

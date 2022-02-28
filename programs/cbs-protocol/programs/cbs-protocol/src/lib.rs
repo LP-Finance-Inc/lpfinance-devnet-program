@@ -11,6 +11,7 @@ const LP_TOKEN_DECIMALS: u8 = 9;
 
 const LTV:u64 = 85;
 const DOMINATOR:u64 = 100;
+const DOMINATOR_PRICE:u64 = 1000000;
 
 #[program]
 pub mod cbs_protocol {
@@ -56,7 +57,9 @@ pub mod cbs_protocol {
 
     pub fn deposit_collateral(
         ctx: Context<DepositCollateral>,
-        amount: u64
+        amount: u64,
+        _pool_bump: u8,
+        _pool_seed: String
     )-> Result<()> {
         msg!("Deposit BTC");
         
@@ -141,7 +144,7 @@ pub mod cbs_protocol {
         // let pyth_price = <pyth_client::Price>::try_from(pyth_price_data);
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
         
-        let btc_price = pyth_price.agg.price as u64;
+        let btc_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;
         total_price += btc_price * user_account.btc_amount;
 
         // SOL price
@@ -149,7 +152,7 @@ pub mod cbs_protocol {
         let pyth_price_data = &pyth_price_info.try_borrow_data()?;
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
 
-        let sol_price = pyth_price.agg.price as u64;
+        let sol_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;
         total_price += sol_price * user_account.sol_amount;
 
         // USDC price
@@ -157,7 +160,7 @@ pub mod cbs_protocol {
         let pyth_price_data = &pyth_price_info.try_borrow_data()?;
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
 
-        let usdc_price = pyth_price.agg.price as u64;        
+        let usdc_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;        
         total_price += usdc_price * user_account.usdc_amount;
 
         // LpUSD price
@@ -182,8 +185,9 @@ pub mod cbs_protocol {
 
         msg!("Borrow Value: !!{:?}!!", borrow_value.to_string());
         msg!("Total Value: !!{:?}!!", total_price.to_string());
-
-        if total_price * LTV / DOMINATOR > borrow_value {
+        let borrable_total = total_price * LTV / DOMINATOR;
+        msg!("Borrowable Total Value: !!{:?}!!", borrable_total.to_string());
+        if borrable_total > borrow_value {
             // Mint
             let seeds = &[
                 ctx.accounts.state_account.protocol_name.as_ref(),
@@ -334,7 +338,7 @@ pub struct Initialize<'info> {
 
 
 #[derive(Accounts)]
-#[instruction(bumps: ProtocolBumps, pool_bump: u8, pool_seed: String)]
+#[instruction(pool_bump: u8, pool_seed: String)]
 pub struct DepositCollateral<'info> {
     #[account(mut)]
     pub user_authority: Signer<'info>,
