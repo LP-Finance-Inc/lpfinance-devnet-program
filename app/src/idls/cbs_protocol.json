@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "name": "cbs_protocal",
+  "name": "cbs_protocol",
   "instructions": [
     {
       "name": "initialize",
@@ -63,13 +63,13 @@
       ],
       "args": [
         {
-          "name": "protocalName",
+          "name": "protocolName",
           "type": "string"
         },
         {
           "name": "bumps",
           "type": {
-            "defined": "ProtocalBumps"
+            "defined": "ProtocolBumps"
           }
         }
       ]
@@ -315,7 +315,7 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "protocalName",
+            "name": "protocolName",
             "type": {
               "array": [
                 "u8",
@@ -326,7 +326,7 @@
           {
             "name": "bumps",
             "type": {
-              "defined": "ProtocalBumps"
+              "defined": "ProtocolBumps"
             }
           },
           {
@@ -399,7 +399,7 @@
   ],
   "types": [
     {
-      "name": "ProtocalBumps",
+      "name": "ProtocolBumps",
       "type": {
         "kind": "struct",
         "fields": [
@@ -436,12 +436,15 @@
           },
           {
             "name": "BorrowFailed"
+          },
+          {
+            "name": "BorrowExceed"
           }
         ]
       }
     }
   ],
   "metadata": {
-    "address": "FURTQbwZCqybpnWA5F3zGP82RgZwp4Jw4JSPziY6V2yH"
+    "address": "3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM"
   }
 }

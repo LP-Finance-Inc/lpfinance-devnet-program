@@ -3,33 +3,33 @@ import * as anchor from '@project-serum/anchor';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token'
 
-import idl from '../../idls/cbs_protocal.json';
+import idl from '../../idls/cbs_protocol.json';
 const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
 
 const NETWORK = 'https://api.devnet.solana.com';
 
 // 2022-02-26 devnet
-// ProgramID FURTQbwZCqybpnWA5F3zGP82RgZwp4Jw4JSPziY6V2yH
-// State-Account: EZ23aCphKJwcrgzNHbyfRKoAnMPvEApJk4Q1hqwsBNQy
-// Pool-USDC: J5a9C2gQXhAJ4ETRgdybMoUujXyvE8uC2FRWJbabJD1S
-// Pool-BTC: D9gNc3RyBxLSaDnhapZLtVDicUUbKmH7WL7vmEamwiep
-// LpSOL-Mint: DVsVeTpt2Xsq56n17dGEJaZ6wtUnSxfKWscmLTUZfY7k
-// LpUSD-Mint: 3hzwCPsbSmtbKZL71s2B9tpdv1ZSH9BvPxhBRU7x32v9
+// ProgramID 3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM
+// State-Account: F9vXpb1rZMo5KBzqW75qSNmui3fmm541DnbbrNg8V86H
+// Pool-USDC: ARE3C71vYjsDYz5tktmKGrThXz2xSToZq4tpubwdMvN4
+// Pool-BTC: 5CxW564g1phyvsCLyWaBETTpZPZ2UVBaX1soyBPXH5Ca
+// LpSOL-Mint: HaWUK6pPMPfXmNjv859Npcrew8K9YaoG2FHVMKzKUxTr
+// LpUSD-Mint: 6Ubj5ELftovPDg3YrzcWrJxS5WA29tUzbXzYaL8AKR3x
 // Bumps {
-//   stateAccount: 254,
-//   lpusdMint: 255,
-//   lpsolMint: 254,
-//   poolUsdc: 254,
-//   poolBtc: 251
+//   stateAccount: 253,
+//   lpusdMint: 253,
+//   lpsolMint: 255,
+//   poolUsdc: 255,
+//   poolBtc: 255
 // }
 
-const stateAccount = new PublicKey("EZ23aCphKJwcrgzNHbyfRKoAnMPvEApJk4Q1hqwsBNQy");
+const stateAccount = new PublicKey("F9vXpb1rZMo5KBzqW75qSNmui3fmm541DnbbrNg8V86H");
 const usdcMint = new PublicKey("2Q1WAAgnpEox5Y4b6Y8YyXVwFNhDdGot467XfvdBJaPf");
 const btcMint = new PublicKey("Hv96pk4HkhGcbNxkBvb7evTU88KzedvgVy2oddBB1ySB");
-const poolUsdc = new PublicKey("J5a9C2gQXhAJ4ETRgdybMoUujXyvE8uC2FRWJbabJD1S");
-const poolBtc = new PublicKey("D9gNc3RyBxLSaDnhapZLtVDicUUbKmH7WL7vmEamwiep");
-const lpsolMint = new PublicKey("DVsVeTpt2Xsq56n17dGEJaZ6wtUnSxfKWscmLTUZfY7k");
-const lpusdMint = new PublicKey("3hzwCPsbSmtbKZL71s2B9tpdv1ZSH9BvPxhBRU7x32v9");
+const poolUsdc = new PublicKey("ARE3C71vYjsDYz5tktmKGrThXz2xSToZq4tpubwdMvN4");
+const poolBtc = new PublicKey("5CxW564g1phyvsCLyWaBETTpZPZ2UVBaX1soyBPXH5Ca");
+const lpsolMint = new PublicKey("HaWUK6pPMPfXmNjv859Npcrew8K9YaoG2FHVMKzKUxTr");
+const lpusdMint = new PublicKey("6Ubj5ELftovPDg3YrzcWrJxS5WA29tUzbXzYaL8AKR3x");
 
 // ======> PYTH
 const pythBtcAccount = new PublicKey("HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J"); // 3m1y5h2uv7EQL3KaJZehvAJa4yDNvgc5yAdL9KPMKwvk
@@ -37,7 +37,7 @@ const pythUsdcAccount = new PublicKey("5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KX
 const pythSolAccount = new PublicKey("J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix"); // 3Mnn2fX6rQyUsyELYms1sBJyChWofzSNRoqYzvgMVz5E
 // ======> PYTH
 
-const protocal_name = "presale_05";
+const protocol_name = "cbs_pool";
 const netconfig = "devnet";
 const connection = new anchor.web3.Connection(anchor.web3.clusterApiUrl(netconfig));
 
@@ -108,7 +108,7 @@ export const BorrowComponent = () => {
     //         const seed1 = publicKey.toBase58().substring(22);
     //         // Find PDA from `seed` for state account
     //         const [stakeAccount, bump] = await PublicKey.findProgramAddress(
-    //             [Buffer.from(protocal_name), Buffer.from(seed0), Buffer.from(seed1)],
+    //             [Buffer.from(protocol_name), Buffer.from(seed0), Buffer.from(seed1)],
     //             program.programId
     //         );
 
@@ -164,8 +164,8 @@ export const BorrowComponent = () => {
         // const seed1 = userAuthority.toBase58().substring(22);
         // Find PDA from `seed` for state account
         const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
-            // [Buffer.from(protocal_name), Buffer.from(seed0), Buffer.from(seed1)],
-            [Buffer.from(protocal_name), Buffer.from(userAuthority.toBuffer())],
+            // [Buffer.from(protocol_name), Buffer.from(seed0), Buffer.from(seed1)],
+            [Buffer.from(protocol_name), Buffer.from(userAuthority.toBuffer())],
             program.programId
         );
         
@@ -228,7 +228,9 @@ export const BorrowComponent = () => {
             try {
                 // SOL decimal is 9
                 // so it would be 0.1 SOL
-                const deposit_amount = new anchor.BN('100000000')
+                const deposit_wei = convert_to_wei(depositAmount);
+                const deposit_amount = new anchor.BN(deposit_wei); // '100000000'
+                console.log("Deposit Amount:", deposit_amount.toString())
                 await program.rpc.depositSol(deposit_amount, {
                     accounts: {
                         userAuthority,
@@ -263,8 +265,8 @@ export const BorrowComponent = () => {
         const program = new anchor.Program(idl, programId);
         
         const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
-            // [Buffer.from(protocal_name), Buffer.from(seed0), Buffer.from(seed1)],
-            [Buffer.from(protocal_name), Buffer.from(userAuthority.toBuffer())],
+            // [Buffer.from(protocol_name), Buffer.from(seed0), Buffer.from(seed1)],
+            [Buffer.from(protocol_name), Buffer.from(userAuthority.toBuffer())],
             program.programId
         );
         
@@ -288,10 +290,12 @@ export const BorrowComponent = () => {
         
         if(accountData && accountData.owner.toBase58() == userAuthority.toBase58()) {
             console.log("Transaction")
-            console.log("YOUR Deposit", accountData.solAmount.toString())
+            console.log("YOUR Depositted", accountData.solAmount.toString())
             try {
-    
-                const borrow_amount = new anchor.BN('200000000');
+                const borrow_wei = convert_to_wei(borrowAmount);
+                const borrow_amount = new anchor.BN(borrow_wei);
+                console.log("Borrow Amount", borrow_amount.toString(), );
+                console.log("Borrow AmountWei", borrow_wei);
                 
                 await program.rpc.borrowLptoken(true, borrow_amount, {
                     accounts: {

@@ -5,7 +5,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token::{self, Mint, MintTo, Transfer, Token, TokenAccount }
 };
-declare_id!("FURTQbwZCqybpnWA5F3zGP82RgZwp4Jw4JSPziY6V2yH");
+declare_id!("3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM");
 
 const LP_TOKEN_DECIMALS: u8 = 9;
 
@@ -13,22 +13,22 @@ const LTV:u64 = 85;
 const DOMINATOR:u64 = 100;
 
 #[program]
-pub mod cbs_protocal {
+pub mod cbs_protocol {
     use super::*;
     pub fn initialize(
         ctx: Context<Initialize>,
-        protocal_name: String,
-        bumps: ProtocalBumps,
+        protocol_name: String,
+        bumps: ProtocolBumps,
     ) -> Result<()> {
         msg!("INITIALIZE PROTOCAL");
 
         let state_account = &mut ctx.accounts.state_account;
 
-        let name_bytes = protocal_name.as_bytes();
+        let name_bytes = protocol_name.as_bytes();
         let mut name_data = [b' '; 10];
         name_data[..name_bytes.len()].copy_from_slice(name_bytes);
 
-        state_account.protocal_name = name_data;
+        state_account.protocol_name = name_data;
         state_account.bumps = bumps;
         state_account.btc_mint = ctx.accounts.btc_mint.key();
         state_account.usdc_mint = ctx.accounts.usdc_mint.key();
@@ -186,7 +186,7 @@ pub mod cbs_protocal {
         if total_price * LTV / DOMINATOR > borrow_value {
             // Mint
             let seeds = &[
-                ctx.accounts.state_account.protocal_name.as_ref(),
+                ctx.accounts.state_account.protocol_name.as_ref(),
                 &[ctx.accounts.state_account.bumps.state_account]
             ];
             let signer = &[&seeds[..]];
@@ -274,14 +274,14 @@ pub mod cbs_protocal {
 }
 
 #[derive(Accounts)]
-#[instruction(protocal_name: String, bumps: ProtocalBumps)]
+#[instruction(protocol_name: String, bumps: ProtocolBumps)]
 pub struct Initialize<'info> {
     // Token program authority
     #[account(mut)]
     pub authority: Signer<'info>,
     // State Accounts
     #[account(init,
-        seeds = [protocal_name.as_bytes()],
+        seeds = [protocol_name.as_bytes()],
         bump,
         payer = authority
     )]
@@ -294,7 +294,7 @@ pub struct Initialize<'info> {
         init,
         token::mint = usdc_mint,
         token::authority = state_account,
-        seeds = [protocal_name.as_bytes(), b"pool_usdc".as_ref()],
+        seeds = [protocol_name.as_bytes(), b"pool_usdc".as_ref()],
         bump,
         payer = authority
     )]
@@ -304,7 +304,7 @@ pub struct Initialize<'info> {
         init,
         token::mint = usdc_mint,
         token::authority = state_account,
-        seeds = [protocal_name.as_bytes(), b"pool_btc".as_ref()],
+        seeds = [protocol_name.as_bytes(), b"pool_btc".as_ref()],
         bump,
         payer = authority
     )]
@@ -312,7 +312,7 @@ pub struct Initialize<'info> {
     #[account(init,
         mint::decimals = LP_TOKEN_DECIMALS,
         mint::authority = state_account,
-        seeds = [protocal_name.as_bytes(), b"lpsol_mint".as_ref()],
+        seeds = [protocol_name.as_bytes(), b"lpsol_mint".as_ref()],
         bump,
         payer = authority
     )]
@@ -321,7 +321,7 @@ pub struct Initialize<'info> {
     #[account(init,
         mint::decimals = LP_TOKEN_DECIMALS,
         mint::authority = state_account,
-        seeds = [protocal_name.as_bytes(), b"lpusd_mint".as_ref()],
+        seeds = [protocol_name.as_bytes(), b"lpusd_mint".as_ref()],
         bump,
         payer = authority
     )]
@@ -334,7 +334,7 @@ pub struct Initialize<'info> {
 
 
 #[derive(Accounts)]
-#[instruction(bumps: ProtocalBumps, pool_bump: u8, pool_seed: String)]
+#[instruction(bumps: ProtocolBumps, pool_bump: u8, pool_seed: String)]
 pub struct DepositCollateral<'info> {
     #[account(mut)]
     pub user_authority: Signer<'info>,
@@ -348,13 +348,13 @@ pub struct DepositCollateral<'info> {
     pub collateral_mint: Account<'info,Mint>,
     // state account for user's wallet
     #[account(mut,
-        seeds = [state_account.protocal_name.as_ref()],
+        seeds = [state_account.protocol_name.as_ref()],
         bump= state_account.bumps.state_account
     )]
     pub state_account: Box<Account<'info, StateAccount>>,
     #[account(
         mut,
-        seeds = [state_account.protocal_name.as_ref(), pool_seed.as_ref()],
+        seeds = [state_account.protocol_name.as_ref(), pool_seed.as_ref()],
         bump = pool_bump)]
     pub collateral_pool: Box<Account<'info, TokenAccount>>,
     #[account(
@@ -370,12 +370,12 @@ pub struct DepositCollateral<'info> {
 
 
 #[derive(Accounts)]
-#[instruction(bumps: ProtocalBumps)]
+#[instruction(bumps: ProtocolBumps)]
 pub struct DepositSOL<'info> {
     #[account(mut)]
     pub user_authority: Signer<'info>,
     #[account(mut,
-        seeds = [state_account.protocal_name.as_ref()],
+        seeds = [state_account.protocol_name.as_ref()],
         bump= state_account.bumps.state_account
     )]
     pub state_account: Box<Account<'info, StateAccount>>,
@@ -402,7 +402,7 @@ pub struct BorrowLpToken<'info> {
     )]
     pub user_account: Box<Account<'info, UserAccount>>,
     #[account(mut,
-        seeds = [state_account.protocal_name.as_ref()],
+        seeds = [state_account.protocol_name.as_ref()],
         bump= state_account.bumps.state_account
     )]
     pub state_account: Box<Account<'info, StateAccount>>,
@@ -428,7 +428,7 @@ pub struct InitUserAccount<'info> {
     // State account for each user/wallet
     #[account(
         init,
-        seeds = [state_account.protocal_name.as_ref(), user_authority.key().as_ref()],
+        seeds = [state_account.protocol_name.as_ref(), user_authority.key().as_ref()],
         bump,
         payer = user_authority
     )]
@@ -466,8 +466,8 @@ pub struct InitUserAccount<'info> {
 #[account]
 #[derive(Default)]
 pub struct StateAccount {
-    pub protocal_name: [u8; 10],
-    pub bumps: ProtocalBumps,
+    pub protocol_name: [u8; 10],
+    pub bumps: ProtocolBumps,
     pub owner: Pubkey,
     pub lpsol_mint: Pubkey,
     pub lpusd_mint: Pubkey,
@@ -490,7 +490,7 @@ pub struct UserAccount {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Default, Clone)]
-pub struct ProtocalBumps{
+pub struct ProtocolBumps{
     pub state_account: u8,
     pub lpusd_mint: u8,
     pub lpsol_mint: u8,
