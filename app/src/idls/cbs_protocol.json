@@ -46,6 +46,16 @@
           "isSigner": false
         },
         {
+          "name": "poolLpsol",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolLpusd",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -364,6 +374,14 @@
           {
             "name": "poolUsdc",
             "type": "publicKey"
+          },
+          {
+            "name": "poolLpsol",
+            "type": "publicKey"
+          },
+          {
+            "name": "poolLpusd",
+            "type": "publicKey"
           }
         ]
       }
@@ -429,6 +447,14 @@
           },
           {
             "name": "poolBtc",
+            "type": "u8"
+          },
+          {
+            "name": "poolLpusd",
+            "type": "u8"
+          },
+          {
+            "name": "poolLpsol",
             "type": "u8"
           }
         ]

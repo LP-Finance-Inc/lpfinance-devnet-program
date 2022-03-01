@@ -8,35 +8,43 @@ const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3
 
 const NETWORK = 'https://api.devnet.solana.com';
 
-// 2022-02-26 devnet
+// 2022-03-01 devnet
 // ProgramID 3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM
-// State-Account: EvFeLhQYAjUgg992feVFdAogHKnb8wdKZBKmYA1XyBY7
-// Pool-USDC: AkCsz9jBudmPKN47rFS16RZQo3rJ7xkvVAkYJpDwYM9V
-// Pool-BTC: HrkssFAVtEdky7SZtj5U8nbF1dvGagvs5Wwi7aUKgF4K
-// LpSOL-Mint: BPxhUPCcuJ51ugnTFtK6H8xcZu5QiGeC7DtCdYiyyfrM
-// LpUSD-Mint: 7LrqbpCQhVFDJD3X3k6HzgYAtpZe4be7biTDBWrZi2Qs
+// State-Account: ES4ob9B6ngcM5FXDShXA6SHUvFSv1DQiZY5bG9NakXaR
+// Pool-USDC: 3FT6VJn3kPAdaBjnNq9oxk47cJVtfyrt8EFFWwArxtMX
+// Pool-BTC: HtrG19tdTKXhJHYFLD6PmjZN22Xi9o9EyVq49P6BBjCj
+// Pool-LpSOL: 8fYcxYJxCWrQtoZuCrwnBU6sPbbnTW5eWpM7S1spsvZR
+// Pool-LpUSD: 5Pb9Cq3Ho5w4JDLvZFjXQyahcpbSVMEpPHT2bAN4HiPy
+// LpSOL-Mint: CCFfxDcVY6iCd4EiocQNymZRhZapuGrxVP4TK1PJrVqh
+// LpUSD-Mint: C6DHbFE8eFmiiZPcY1mTPaG928q6cXuE9vD2NHuDL5TH
 // Bumps {
-//   stateAccount: 255,
-//   lpusdMint: 255,
+//   stateAccount: 254,
+//   lpusdMint: 253,
 //   lpsolMint: 255,
 //   poolUsdc: 255,
-//   poolBtc: 255
+//   poolBtc: 255,
+//   poolLpsol: 255,
+//   poolLpusd: 253
 // }
 
 const bumps = {
-    stateAccount: 255,
-    lpusdMint: 255,
+    stateAccount: 254,
+    lpusdMint: 253,
     lpsolMint: 255,
     poolUsdc: 255,
-    poolBtc: 255
+    poolBtc: 255,
+    poolLpsol: 255,
+    poolLpusd: 253
 }
-const stateAccount = new PublicKey("EvFeLhQYAjUgg992feVFdAogHKnb8wdKZBKmYA1XyBY7");
+const stateAccount = new PublicKey("ES4ob9B6ngcM5FXDShXA6SHUvFSv1DQiZY5bG9NakXaR");
 const usdcMint = new PublicKey("2Q1WAAgnpEox5Y4b6Y8YyXVwFNhDdGot467XfvdBJaPf");
 const btcMint = new PublicKey("Hv96pk4HkhGcbNxkBvb7evTU88KzedvgVy2oddBB1ySB");
-const poolUsdc = new PublicKey("ARE3C71vYjsDYz5tktmKGrThXz2xSToZq4tpubwdMvN4");
-const poolBtc = new PublicKey("5CxW564g1phyvsCLyWaBETTpZPZ2UVBaX1soyBPXH5Ca");
-const lpsolMint = new PublicKey("BPxhUPCcuJ51ugnTFtK6H8xcZu5QiGeC7DtCdYiyyfrM");
-const lpusdMint = new PublicKey("7LrqbpCQhVFDJD3X3k6HzgYAtpZe4be7biTDBWrZi2Qs");
+const poolUsdc = new PublicKey("3FT6VJn3kPAdaBjnNq9oxk47cJVtfyrt8EFFWwArxtMX");
+const poolBtc = new PublicKey("HtrG19tdTKXhJHYFLD6PmjZN22Xi9o9EyVq49P6BBjCj");
+const poolLpsol = new PublicKey("8fYcxYJxCWrQtoZuCrwnBU6sPbbnTW5eWpM7S1spsvZR");
+const poolLpusd = new PublicKey("5Pb9Cq3Ho5w4JDLvZFjXQyahcpbSVMEpPHT2bAN4HiPy");
+const lpsolMint = new PublicKey("CCFfxDcVY6iCd4EiocQNymZRhZapuGrxVP4TK1PJrVqh");
+const lpusdMint = new PublicKey("C6DHbFE8eFmiiZPcY1mTPaG928q6cXuE9vD2NHuDL5TH");
 
 // ======> PYTH
 const pythBtcAccount = new PublicKey("HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J"); // 3m1y5h2uv7EQL3KaJZehvAJa4yDNvgc5yAdL9KPMKwvk
@@ -44,7 +52,7 @@ const pythUsdcAccount = new PublicKey("5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KX
 const pythSolAccount = new PublicKey("J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix"); // 3Mnn2fX6rQyUsyELYms1sBJyChWofzSNRoqYzvgMVz5E
 // ======> PYTH
 
-const protocol_name = "cbs_pool01";
+const protocol_name = "cbs_pool02";
 const netconfig = "devnet";
 const connection = new anchor.web3.Connection(anchor.web3.clusterApiUrl(netconfig));
 
@@ -275,30 +283,82 @@ export const BorrowComponent = () => {
             program.programId
         );
 
+        console.log("UserAccount", userAccount.toBase58(), userAuthority.toBase58());
+        // console.log("SEED", seed0, seed1, bump, userAuthority.toBase58())
+                
+        let accountData;
+        try {
+            accountData = await program.account.userAccount.fetch(userAccount);
+        } catch (err) {
+            accountData = null;
+        }
+
+        const userLpusd = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            lpusdMint,
+            userAuthority
+        )
+
+        const userLpsol = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            lpsolMint,
+            userAuthority
+        )
+
+        if (accountData == null || accountData == undefined) {
+            try {
+                await program.rpc.initUserAccount(userAccountBump, {
+                    accounts: {
+                        userAccount,
+                        userLpusd,
+                        lpusdMint,
+                        userLpsol,
+                        lpsolMint,
+                        stateAccount,
+                        userAuthority,
+                        systemProgram: SystemProgram.programId,
+                        tokenProgram: TOKEN_PROGRAM_ID,
+                        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                        rent: SYSVAR_RENT_PUBKEY
+                    }
+                });
+                accountData = await program.account.userAccount.fetch(userAccount);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        console.log("Passed", accountData)
+        if (accountData == null || accountData == undefined) {
+            return;
+        }
+
         let collateralMint = null;
         let collateralPool = null;
-        let poolBump = null;
         let poolSeed = null;
+        let poolBump = 0;
         if (depositTokenName == "lpusd") {
             collateralMint = lpusdMint;
-            collateralPool = stateAccount;
-            poolBump = 0;
-            poolSeed = "";
+            collateralPool = poolLpusd;
+            poolSeed = "pool_lpusd";
+            poolBump = bumps.poolLpusd;
         } else if(depositTokenName == "lpsol") {
             collateralMint = lpsolMint;
-            collateralPool = stateAccount;
-            poolBump = 0;
-            poolSeed = "";
+            collateralPool = poolLpsol;
+            poolSeed = "pool_lpsol";
+            poolBump = bumps.poolLpsol;
         } else if(depositTokenName == "usdc") {
             collateralMint = usdcMint;
             collateralPool = poolUsdc;
-            poolBump = bumps.poolUsdc;
             poolSeed = "pool_usdc";
+            poolBump = bumps.poolUsdc;
         } else if(depositTokenName == "btc") {
             collateralPool = poolBtc;
             collateralMint = btcMint;
-            poolBump = bumps.poolBtc;
             poolSeed = "pool_btc";
+            poolBump = bumps.poolBtc;
         } else {
             alert("Invalid");
         }
@@ -309,28 +369,36 @@ export const BorrowComponent = () => {
             userAuthority
         )
 
-        try {
-            const deposit_wei = convert_to_wei(depositAmount);
-            const deposit_amount = new anchor.BN(deposit_wei); // '100000000'
-            console.log("Deposit Amount:", deposit_amount.toString())
-            await program.rpc.depositCollateral(
-                deposit_amount, poolBump, poolSeed, {
-                accounts: {
-                    userAuthority,
-                    stateAccount,
-                    userAccount,
-                    userCollateral,
-                    collateralMint,
-                    collateralPool,
-                    systemProgram: SystemProgram.programId,
-                    tokenProgram: TOKEN_PROGRAM_ID,
-                    rent: SYSVAR_RENT_PUBKEY
-                }
-            })
-            // await getBalance();
-        } catch (err) {
-            console.log(err);
-        }
+        if(accountData && accountData.owner.toBase58() == userAuthority.toBase58()) {
+            console.log("Transaction")
+            try {
+                const deposit_wei = convert_to_wei(depositAmount);
+                const deposit_amount = new anchor.BN(deposit_wei); // '100000000'
+                console.log("Deposit Amount:", deposit_amount.toString())
+
+                console.log("Detail Info", userCollateral.toBase58(), collateralMint.toBase58(), collateralPool.toBase58(), poolBump, poolSeed)
+                await program.rpc.depositCollateral(
+                    deposit_amount, poolBump, poolSeed, {
+                    accounts: {
+                        userAuthority,
+                        userCollateral,
+                        collateralMint,
+                        stateAccount,
+                        collateralPool,
+                        userAccount,
+                        systemProgram: SystemProgram.programId,
+                        tokenProgram: TOKEN_PROGRAM_ID,
+                        rent: SYSVAR_RENT_PUBKEY
+                    }
+                })
+                // await getBalance();
+            } catch (err) {
+                console.log(err);
+            }
+            console.log("End transaction")
+        } else {
+            alert("Owner account does not match");
+        } 
 
         console.log("End transaction")
     }

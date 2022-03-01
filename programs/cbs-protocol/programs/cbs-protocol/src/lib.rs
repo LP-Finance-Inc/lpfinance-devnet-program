@@ -37,6 +37,8 @@ pub mod cbs_protocol {
         state_account.lpsol_mint = ctx.accounts.lpsol_mint.key();
         state_account.pool_btc = ctx.accounts.pool_btc.key();
         state_account.pool_usdc = ctx.accounts.pool_usdc.key();
+        state_account.pool_lpsol = ctx.accounts.pool_lpsol.key();
+        state_account.pool_lpusd = ctx.accounts.pool_lpusd.key();
         state_account.owner = ctx.accounts.authority.key();
 
         Ok(())
@@ -60,9 +62,7 @@ pub mod cbs_protocol {
         amount: u64,
         _pool_bump: u8,
         _pool_seed: String
-    )-> Result<()> {
-        msg!("Deposit BTC");
-        
+    )-> Result<()> {        
         if ctx.accounts.user_collateral.amount < amount {
             return Err(ErrorCode::InsufficientAmount.into());
         }
@@ -306,7 +306,7 @@ pub struct Initialize<'info> {
     // BTC POOL
     #[account(
         init,
-        token::mint = usdc_mint,
+        token::mint = btc_mint,
         token::authority = state_account,
         seeds = [protocol_name.as_bytes(), b"pool_btc".as_ref()],
         bump,
@@ -330,7 +330,26 @@ pub struct Initialize<'info> {
         payer = authority
     )]
     pub lpusd_mint: Box<Account<'info, Mint>>,
-
+    // LpSOL POOL
+    #[account(
+        init,
+        token::mint = lpsol_mint,
+        token::authority = state_account,
+        seeds = [protocol_name.as_bytes(), b"pool_lpsol".as_ref()],
+        bump,
+        payer = authority
+    )]
+    pub pool_lpsol: Account<'info, TokenAccount>,
+    // LpUSDC POOL
+    #[account(
+        init,
+        token::mint = lpusd_mint,
+        token::authority = state_account,
+        seeds = [protocol_name.as_bytes(), b"pool_lpusd".as_ref()],
+        bump,
+        payer = authority
+    )]
+    pub pool_lpusd: Account<'info, TokenAccount>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>
@@ -338,7 +357,7 @@ pub struct Initialize<'info> {
 
 
 #[derive(Accounts)]
-#[instruction(pool_bump: u8, pool_seed: String)]
+#[instruction(amount: u64, pool_bump: u8, pool_seed: String)]
 pub struct DepositCollateral<'info> {
     #[account(mut)]
     pub user_authority: Signer<'info>,
@@ -374,7 +393,6 @@ pub struct DepositCollateral<'info> {
 
 
 #[derive(Accounts)]
-#[instruction(bumps: ProtocolBumps)]
 pub struct DepositSOL<'info> {
     #[account(mut)]
     pub user_authority: Signer<'info>,
@@ -478,7 +496,9 @@ pub struct StateAccount {
     pub btc_mint: Pubkey,
     pub usdc_mint: Pubkey,
     pub pool_btc: Pubkey,
-    pub pool_usdc: Pubkey
+    pub pool_usdc: Pubkey,
+    pub pool_lpsol: Pubkey,
+    pub pool_lpusd: Pubkey
 }
 
 #[account]
@@ -500,6 +520,8 @@ pub struct ProtocolBumps{
     pub lpsol_mint: u8,
     pub pool_usdc: u8,
     pub pool_btc: u8,
+    pub pool_lpusd: u8,
+    pub pool_lpsol: u8,
 }
 
 #[error_code]

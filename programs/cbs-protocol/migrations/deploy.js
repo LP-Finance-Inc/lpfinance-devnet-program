@@ -10,9 +10,11 @@ const idl = require("../target/idl/cbs_protocol.json");
 const programID = idl.metadata.address;
 
 console.log("ProgramID", programID);
-const protocol_name = "cbs_pool01";
+const protocol_name = "cbs_pool02";
 const pool_usdc = "pool_usdc";
 const pool_btc = "pool_btc";
+const pool_lpsol = "pool_lpsol";
+const pool_lpusd = "pool_lpusd";
 const lpsol_mint = "lpsol_mint";
 const lpusd_mint = "lpusd_mint";
 
@@ -34,7 +36,9 @@ module.exports = async function (provider) {
       lpusdMint: 0,
       lpsolMint: 0,
       poolUsdc: 0,
-      poolBtc: 0
+      poolBtc: 0,
+      poolLpsol: 0,
+      poolLpusd: 0
     };
 
     // Find PDA from `cbs protocol` for state account
@@ -60,6 +64,22 @@ module.exports = async function (provider) {
     );
     bumps.poolBtc = poolBtcBump;
     console.log("Pool-BTC:", poolBtc.toBase58());
+
+    // Find PDA for `lpsol pool`
+    const [poolLpsol, poolLpsolBump] = await PublicKey.findProgramAddress(
+      [Buffer.from(protocol_name), Buffer.from(pool_lpsol)],
+      program.programId
+    );
+    bumps.poolLpsol = poolLpsolBump;
+    console.log("Pool-LpSOL:", poolLpsol.toBase58());
+
+    // Find PDA for `lpusd pool`
+    const [poolLpusd, poolLpusdBump] = await PublicKey.findProgramAddress(
+      [Buffer.from(protocol_name), Buffer.from(pool_lpusd)],
+      program.programId
+    );
+    bumps.poolLpusd = poolLpusdBump;
+    console.log("Pool-LpUSD:", poolLpusd.toBase58());
 
     // Find PDA for `lpsol mint`
     const [lpsolMint, lpsolMintBump] = await PublicKey.findProgramAddress(
@@ -93,6 +113,8 @@ module.exports = async function (provider) {
         poolBtc,
         lpsolMint,
         lpusdMint,
+        poolLpsol,
+        poolLpusd,
         systemProgram: SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         rent: SYSVAR_RENT_PUBKEY,
@@ -103,6 +125,25 @@ module.exports = async function (provider) {
     console.log("Transaction error: ", err);
   }
 }
+
+// 2022-03-1 devnet
+// ProgramID 3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM
+// State-Account: ES4ob9B6ngcM5FXDShXA6SHUvFSv1DQiZY5bG9NakXaR
+// Pool-USDC: 3FT6VJn3kPAdaBjnNq9oxk47cJVtfyrt8EFFWwArxtMX
+// Pool-BTC: HtrG19tdTKXhJHYFLD6PmjZN22Xi9o9EyVq49P6BBjCj
+// Pool-LpSOL: 8fYcxYJxCWrQtoZuCrwnBU6sPbbnTW5eWpM7S1spsvZR
+// Pool-LpUSD: 5Pb9Cq3Ho5w4JDLvZFjXQyahcpbSVMEpPHT2bAN4HiPy
+// LpSOL-Mint: CCFfxDcVY6iCd4EiocQNymZRhZapuGrxVP4TK1PJrVqh
+// LpUSD-Mint: C6DHbFE8eFmiiZPcY1mTPaG928q6cXuE9vD2NHuDL5TH
+// Bumps {
+//   stateAccount: 254,
+//   lpusdMint: 253,
+//   lpsolMint: 255,
+//   poolUsdc: 255,
+//   poolBtc: 255,
+//   poolLpsol: 255,
+//   poolLpusd: 253
+// }
 
 // 2022-02-26 devnet
 // ProgramID 3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM
