@@ -1,10 +1,18 @@
 use anchor_lang::prelude::*;
+use pyth_client;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::{self, Mint, Transfer, Token, TokenAccount }
 };
 
+use cbs_protocol::cpi::accounts::LiquidateCollateral;
+use cbs_protocol::program::CbsProtocol;
+use cbs_protocol::{self, UserAccount, StateAccount};
+
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+
+const DOMINATOR:u64 = 100;
+const DOMINATOR_PRICE:u64 = 1000000;
 
 #[program]
 pub mod lpusd_auction {
@@ -58,6 +66,97 @@ pub mod lpusd_auction {
         let user_account = &mut ctx.accounts.user_account;
         user_account.lpusd_amount = user_account.lpusd_amount + amount;
 
+        let state_account = &mut ctx.accounts.state_account;
+        state_account.lpusd_amount = state_account.lpusd_amount + amount;
+        
+        // Need to calcuate discount of reward
+        let discount_value = (state_account.reward_percent - 100) * amount / state_account.reward_denominator;
+        user_account.discount_reward = user_account.discount_reward + discount_value;
+
+        Ok(())
+    }
+
+    pub fn liquidate (
+        ctx: Context<Liquidate>
+    ) -> Result<()> {
+        // Transfer lpusd from auction to cbs
+        let liquidator = ctx.accounts.liquidator.to_account_info();
+        let borrowed_lpusd = liquidator.borrowed_lpusd;
+
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.auction_lpusd.to_account_info(),
+            to: ctx.accounts.cbs_lpusd.to_account_info(),
+            authority: ctx.accounts.user_authority.to_account_info()
+        };
+
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        token::transfer(cpi_ctx, borrowed_lpusd)?;
+
+        let mut total_price = 0;
+        let mut usdc_price = 0;
+
+        if liquidator.btc_amount > 0 {
+            let pyth_price_info = &ctx.accounts.pyth_btc_account;
+            let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+            // let pyth_price = <pyth_client::Price>::try_from(pyth_price_data);
+            let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+            
+            let btc_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;
+            total_price += btc_price * liquidator.btc_amount;
+        }
+
+        // SOL price
+        if liquidator.sol_amount > 0 {
+
+            let pyth_price_info = &ctx.accounts.pyth_sol_account;
+            let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+            let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+            let sol_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;
+            total_price += sol_price * liquidator.sol_amount;
+            // LpSOL
+            total_price += sol_price * liquidator.lpsol_amount ;
+        }
+
+        // USDC price
+        if liquidator.usdc_amount > 0 {
+            let pyth_price_info = &ctx.accounts.pyth_usdc_account;
+            let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+            let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+            usdc_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;        
+            total_price += usdc_price * liquidator.usdc_amount;
+            // LpUSDC
+            total_price += usdc_price * liquidator.lpusd_amount;
+        }
+   
+        let reward = total_price - borrowed_lpusd * usdc_price;
+        
+        let auction_account = &mut ctx.accounts.auction_account;
+        let auction_total = usdc_price * auction_account.lpusd_amount;
+        let auction_cur_reward = auction_total * (auction_account.reward_percent - 100);
+
+        // Transfer all collaterals from cbs to auction
+        let cpi_program = ctx.accounts.cbs_program.to_account_info();
+        let cpi_accounts = LiquidateCollateral {
+            user_account: ctx.accounts.liquidator.to_account_info(),
+            state_account: ctx.accounts.cbs_account.to_account_info(),
+            auction_lpusd: ctx.accounts.auction_lpusd.to_account_info(),
+            auction_lpsol: ctx.accounts.auction_lpsol.to_account_info(),
+            auction_btc: ctx.accounts.auction_btc.to_account_info(),
+            auction_usdc: ctx.accounts.auction_usdc.to_account_info(),
+            cbs_lpusd: ctx.accounts.cbs_lpusd.to_account_info(),
+            cbs_lpsol: ctx.accounts.cbs_lpsol.to_account_info(),
+            cbs_usdc: ctx.accounts.cbs_usdc.to_account_info(),
+            cbs_btc: ctx.accounts.cbs_btc.to_account_info(),
+            system_program: ctx.accounts.system_program.to_account_info(),
+            token_program: ctx.accounts.token_program.to_account_info(),
+            rent: ctx.accounts.rent.to_account_info()
+        };
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        cbs_protocol::cpi::liquidate_collateral(cpi_ctx)?;
+
         Ok(())
     }
 
@@ -71,6 +170,10 @@ pub mod lpusd_auction {
             return Err(ErrorCode::InsufficientAmount.into());
         }
 
+        if ctx.accounts.pool_lpusd.amount < amount {
+            return Err(ErrorCode::InsufficientPoolAmount.into());
+        }
+
         let cpi_accounts = Transfer {
             from: ctx.accounts.pool_lpusd.to_account_info(),
             to: ctx.accounts.user_lpusd.to_account_info(),
@@ -82,6 +185,9 @@ pub mod lpusd_auction {
         token::transfer(cpi_ctx, amount)?;
 
         user_account.lpusd_amount = user_account.lpusd_amount - amount;
+
+        let state_account = &mut ctx.accounts.state_account;
+        state_account.lpsol_amount = state_account.lpusd_amount - amount;
         Ok(())
     }
 }
@@ -96,7 +202,7 @@ pub struct Initialize <'info>{
         bump,
         payer = authority
     )]
-    pub state_account: Box<Account<'info, StateAccount>>,
+    pub state_account: Box<Account<'info, AuctionStateAccount>>,
     pub usdc_mint: Box<Account<'info, Mint>>,
     pub btc_mint: Box<Account<'info, Mint>>,
     pub lpusd_mint: Account<'info,Mint>,
@@ -155,9 +261,9 @@ pub struct InitUserAccount<'info> {
         bump,
         payer = user_authority
     )]
-    pub user_account: Account<'info, UserAccount>,
+    pub user_account: Account<'info, UserStateAccount>,
     #[account(mut)]
-    pub state_account: Box<Account<'info, StateAccount>>,
+    pub state_account: Box<Account<'info, AuctionStateAccount>>,
     // Contract Authority accounts
     #[account(mut)]
     pub user_authority: Signer<'info>,
@@ -183,7 +289,7 @@ pub struct DepositLpUSD<'info> {
         seeds = [state_account.auction_name.as_ref()],
         bump = state_account.bumps.state_account
     )]
-    pub state_account: Box<Account<'info, StateAccount>>,
+    pub state_account: Box<Account<'info, AuctionStateAccount>>,
     #[account(mut,
         seeds = [state_account.auction_name.as_ref(), b"pool_lpusd".as_ref()],
         bump = state_account.bumps.pool_lpusd
@@ -193,7 +299,37 @@ pub struct DepositLpUSD<'info> {
         mut,
         constraint = user_account.owner == user_authority.key()
     )]
-    pub user_account: Box<Account<'info, UserAccount>>,
+    pub user_account: Box<Account<'info, UserStateAccount>>,
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>
+}
+
+#[derive(Accounts)]
+pub struct Liquidate<'info> {
+    #[account(mut)]
+    pub user_authority: Signer<'info>,
+    #[account(mut)]
+    pub auction_account: Account<'info, AuctionStateAccount>,
+    #[account(mut)]
+    pub liquidator: Account<'info, UserAccount>,
+    #[account(mut)]
+    pub cbs_account: Account<'info, StateAccount>,
+    pub cbs_program: Program<'info, CbsProtocol>,
+
+    pub auction_lpusd: Account<'info, TokenAccount>,
+    pub auction_lpsol: Account<'info, TokenAccount>,
+    pub auction_btc: Account<'info, TokenAccount>,
+    pub auction_usdc: Account<'info, TokenAccount>,
+    pub cbs_lpusd: Account<'info, TokenAccount>,
+    pub cbs_lpsol: Account<'info, TokenAccount>,
+    pub cbs_usdc: Account<'info, TokenAccount>,
+    pub cbs_btc: Account<'info, TokenAccount>,
+    // pyth
+    pub pyth_btc_account: AccountInfo<'info>,
+    pub pyth_usdc_account: AccountInfo<'info>,
+    pub pyth_sol_account: AccountInfo<'info>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -215,7 +351,7 @@ pub struct WithdrawLpUSD<'info> {
         seeds = [state_account.auction_name.as_ref()],
         bump = state_account.bumps.state_account
     )]
-    pub state_account: Box<Account<'info, StateAccount>>,
+    pub state_account: Box<Account<'info, AuctionStateAccount>>,
     #[account(mut,
         seeds = [state_account.auction_name.as_ref(), b"pool_lpusd".as_ref()],
         bump = state_account.bumps.pool_lpusd
@@ -225,7 +361,7 @@ pub struct WithdrawLpUSD<'info> {
         mut,
         constraint = user_account.owner == user_authority.key()
     )]
-    pub user_account: Box<Account<'info, UserAccount>>,
+    pub user_account: Box<Account<'info, UserStateAccount>>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -234,10 +370,11 @@ pub struct WithdrawLpUSD<'info> {
 
 #[account]
 #[derive(Default)]
-pub struct UserAccount {
+pub struct UserStateAccount {
     pub lpusd_amount: u64,
     pub owner: Pubkey,
-    pub bump: u8
+    pub bump: u8,
+    pub discount_reward: u64
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Default, Clone)]
@@ -253,7 +390,7 @@ pub struct AuctionBumps{
 
 #[account]
 #[derive(Default)]
-pub struct StateAccount {
+pub struct AuctionStateAccount {
     pub auction_name: [u8; 10],
     pub bumps: AuctionBumps,
     pub owner: Pubkey,
@@ -264,11 +401,20 @@ pub struct StateAccount {
     pub pool_btc: Pubkey,
     pub pool_usdc: Pubkey,
     pub pool_lpsol: Pubkey,
-    pub pool_lpusd: Pubkey
+    pub pool_lpusd: Pubkey,
+    pub lpusd_amount: u64,
+    pub lpsol_amount: u64,
+    pub sol_amount: u64,
+    pub btc_amount: u64,
+    pub usdc_amount: u64,
+    pub reward_percent: u64,
+    pub reward_denominator: u64
 }
 
 #[error_code]
 pub enum ErrorCode {
-    #[msg("Insufficient Amount")]
-    InsufficientAmount
+    #[msg("Insufficient User's Amount")]
+    InsufficientAmount,
+    #[msg("Insufficient Pool's Amount")]
+    InsufficientPoolAmount
 }
