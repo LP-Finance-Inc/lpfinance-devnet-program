@@ -275,6 +275,72 @@ pub mod cbs_protocol {
 
         Ok(())
     }
+
+    pub fn liquidate_collateral(
+        ctx: Context<LiquidateCollateral>
+    ) -> Result<()> {
+        let user_account = &mut ctx.accounts.user_account;
+
+        let lpusd_amount = user_account.lpusd_amount;
+        let lpsol_amount = user_account.lpsol_amount;
+        let usdc_amount = user_account.usdc_amount;
+        let btc_amount = user_account.btc_amount;
+
+        if lpusd_amount > 0 {
+            let cpi_accounts = Transfer {
+                from: ctx.accounts.cbs_lpusd.to_account_info(),
+                to: ctx.accounts.auction_lpusd.to_account_info(),
+                authority: ctx.accounts.state_account.to_account_info()
+            };
+    
+            let cpi_program = ctx.accounts.token_program.to_account_info();
+            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            token::transfer(cpi_ctx, lpusd_amount)?;
+        }
+
+        if lpsol_amount > 0 {
+            let cpi_accounts = Transfer {
+                from: ctx.accounts.cbs_lpsol.to_account_info(),
+                to: ctx.accounts.auction_lpsol.to_account_info(),
+                authority: ctx.accounts.state_account.to_account_info()
+            };
+    
+            let cpi_program = ctx.accounts.token_program.to_account_info();
+            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            token::transfer(cpi_ctx, lpsol_amount)?;
+        }
+
+        if btc_amount > 0 {
+            let cpi_accounts = Transfer {
+                from: ctx.accounts.cbs_btc.to_account_info(),
+                to: ctx.accounts.auction_btc.to_account_info(),
+                authority: ctx.accounts.state_account.to_account_info()
+            };
+    
+            let cpi_program = ctx.accounts.token_program.to_account_info();
+            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            token::transfer(cpi_ctx, btc_amount)?;
+        }
+
+        if usdc_amount > 0 {
+            let cpi_accounts = Transfer {
+                from: ctx.accounts.cbs_usdc.to_account_info(),
+                to: ctx.accounts.auction_usdc.to_account_info(),
+                authority: ctx.accounts.state_account.to_account_info()
+            };
+    
+            let cpi_program = ctx.accounts.token_program.to_account_info();
+            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            token::transfer(cpi_ctx, usdc_amount)?;
+        }
+        user_account.lpusd_amount = 0;
+        user_account.lpsol_amount = 0;
+        user_account.usdc_amount = 0;
+        user_account.btc_amount = 0;
+        user_account.borrowed_lpusd = 0;
+        
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -485,6 +551,34 @@ pub struct InitUserAccount<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
+#[derive(Accounts)]
+pub struct LiquidateCollateral<'info> {
+    #[account(mut)]
+    pub user_account: Account<'info, UserAccount>,
+    #[account(mut)]
+    pub state_account: Account<'info, StateAccount>,
+    #[account(mut)]
+    pub auction_lpusd: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub auction_lpsol: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub auction_btc: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub auction_usdc: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub cbs_lpusd: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub cbs_lpsol: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub cbs_btc: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub cbs_usdc: Account<'info, TokenAccount>,
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>
+}
+
 #[account]
 #[derive(Default)]
 pub struct StateAccount {
@@ -504,6 +598,7 @@ pub struct StateAccount {
 #[account]
 #[derive(Default)]
 pub struct UserAccount {
+    pub borrowed_lpusd: u64,
     pub btc_amount: u64,
     pub sol_amount: u64,
     pub usdc_amount: u64,
