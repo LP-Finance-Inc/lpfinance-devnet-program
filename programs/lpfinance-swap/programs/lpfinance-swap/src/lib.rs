@@ -307,10 +307,6 @@ pub struct SwapTokenToToken<'info> {
         constraint = quote_pool.mint == dest_mint.key()
     )]
     pub quote_pool : Box<Account<'info, TokenAccount>>,
-    #[account(mut,
-        seeds = [state_account.swap_name.as_ref(), b"swap_pool".as_ref()],
-        bump = state_account.bumps.swap_pool)]
-    pub swap_pool: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub quote_mint: Account<'info,Mint>,
     pub pyth_btc_account: AccountInfo<'info>,

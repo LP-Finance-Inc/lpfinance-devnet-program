@@ -9,6 +9,10 @@ use cbs_protocol::cpi::accounts::LiquidateCollateral;
 use cbs_protocol::program::CbsProtocol;
 use cbs_protocol::{self, UserAccount, StateAccount};
 
+use lpfinance_swap::cpi::accounts::SwapTokenToToken;
+use lpfinance_swap::program::LpfinanceSwap;
+use lpfinance_swap::{self}
+
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 const DOMINATOR:u64 = 100;
@@ -80,7 +84,7 @@ pub mod lpusd_auction {
         ctx: Context<Liquidate>
     ) -> Result<()> {
         // Transfer lpusd from auction to cbs
-        let liquidator = ctx.accounts.liquidator.to_account_info();
+        let liquidator = &mut ctx.accounts.liquidator;
         let borrowed_lpusd = liquidator.borrowed_lpusd;
 
         let cpi_accounts = Transfer {
@@ -93,49 +97,6 @@ pub mod lpusd_auction {
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
         token::transfer(cpi_ctx, borrowed_lpusd)?;
 
-        let mut total_price = 0;
-        let mut usdc_price = 0;
-
-        if liquidator.btc_amount > 0 {
-            let pyth_price_info = &ctx.accounts.pyth_btc_account;
-            let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-            // let pyth_price = <pyth_client::Price>::try_from(pyth_price_data);
-            let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-            
-            let btc_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;
-            total_price += btc_price * liquidator.btc_amount;
-        }
-
-        // SOL price
-        if liquidator.sol_amount > 0 {
-
-            let pyth_price_info = &ctx.accounts.pyth_sol_account;
-            let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-            let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-            let sol_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;
-            total_price += sol_price * liquidator.sol_amount;
-            // LpSOL
-            total_price += sol_price * liquidator.lpsol_amount ;
-        }
-
-        // USDC price
-        if liquidator.usdc_amount > 0 {
-            let pyth_price_info = &ctx.accounts.pyth_usdc_account;
-            let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-            let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-            usdc_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;        
-            total_price += usdc_price * liquidator.usdc_amount;
-            // LpUSDC
-            total_price += usdc_price * liquidator.lpusd_amount;
-        }
-   
-        let reward = total_price - borrowed_lpusd * usdc_price;
-        
-        let auction_account = &mut ctx.accounts.auction_account;
-        let auction_total = usdc_price * auction_account.lpusd_amount;
-        let auction_cur_reward = auction_total * (auction_account.reward_percent - 100);
 
         // Transfer all collaterals from cbs to auction
         let cpi_program = ctx.accounts.cbs_program.to_account_info();
@@ -157,9 +118,110 @@ pub mod lpusd_auction {
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
         cbs_protocol::cpi::liquidate_collateral(cpi_ctx)?;
 
+        let mut total_price = 0;
+        let mut usdc_price = 0;
+
+        if liquidator.btc_amount > 0 {
+            let pyth_price_info = &ctx.accounts.pyth_btc_account;
+            let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+            // let pyth_price = <pyth_client::Price>::try_from(pyth_price_data);
+            let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+            
+            let btc_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;
+            total_price += btc_price * liquidator.btc_amount;
+
+            let cpi_program = ctx.accounts.cbs_program.to_account_info();
+            let cpi_accounts = SwapTokenToToken {
+                user_authority: ctx.accounts.user_authority.to_account_info(),
+                state_account: ctx.accounts.auction_account.to_account_info(),
+                user_quote: ctx.accounts.auction_btc.to_account_info(),
+                quote_pool: ctx.accounts.swap_btc.to_account_info(),
+                quote_mint: ctx.accounts.btc_mint.to_account_info(),
+                pyth_btc_account: ctx.accounts.pyth_btc_account.to_account_info(),
+                pyth_usdc_account: ctx.accounts.pyth_usdc_account.to_account_info(),
+                pyth_sol_account: ctx.accounts.pyth_sol_account.to_account_info(),
+                system_program: ctx.accounts.system_program.to_account_info(),
+                token_program: ctx.accounts.token_program.to_account_info(),
+                rent: ctx.accounts.rent.to_account_info()
+            };
+            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            cbs_protocol::cpi::swap_token_to_token(cpi_ctx)?;
+        }
+
+        // SOL price
+        if liquidator.sol_amount > 0 {
+
+            let pyth_price_info = &ctx.accounts.pyth_sol_account;
+            let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+            let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+            let sol_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;
+            total_price += sol_price * liquidator.sol_amount;
+            // LpSOL
+            total_price += sol_price * liquidator.lpsol_amount ;
+
+            let cpi_program = ctx.accounts.cbs_program.to_account_info();
+            let cpi_accounts = SwapTokenToToken {
+                user_authority: ctx.accounts.user_authority.to_account_info(),
+                state_account: ctx.accounts.auction_account.to_account_info(),
+                user_quote: ctx.accounts.auction_lpsol.to_account_info(),
+                quote_pool: ctx.accounts.swap_lpsol.to_account_info(),
+                quote_mint: ctx.accounts.lpsol_mint.to_account_info(),
+                pyth_btc_account: ctx.accounts.pyth_btc_account.to_account_info(),
+                pyth_usdc_account: ctx.accounts.pyth_usdc_account.to_account_info(),
+                pyth_sol_account: ctx.accounts.pyth_sol_account.to_account_info(),
+                system_program: ctx.accounts.system_program.to_account_info(),
+                token_program: ctx.accounts.token_program.to_account_info(),
+                rent: ctx.accounts.rent.to_account_info()
+            };
+            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            cbs_protocol::cpi::swap_token_to_token(cpi_ctx)?;
+        }
+
+        // USDC price
+        if liquidator.usdc_amount > 0 {
+            let pyth_price_info = &ctx.accounts.pyth_usdc_account;
+            let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+            let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+            usdc_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;        
+            total_price += usdc_price * liquidator.usdc_amount;
+            // LpUSDC
+            total_price += usdc_price * liquidator.lpusd_amount;
+
+            let cpi_program = ctx.accounts.cbs_program.to_account_info();
+            let cpi_accounts = SwapTokenToToken {
+                user_authority: ctx.accounts.user_authority.to_account_info(),
+                state_account: ctx.accounts.auction_account.to_account_info(),
+                user_quote: ctx.accounts.auction_usdc.to_account_info(),
+                quote_pool: ctx.accounts.swap_usdc.to_account_info(),
+                quote_mint: ctx.accounts.usdc_mint.to_account_info(),
+                pyth_btc_account: ctx.accounts.pyth_btc_account.to_account_info(),
+                pyth_usdc_account: ctx.accounts.pyth_usdc_account.to_account_info(),
+                pyth_sol_account: ctx.accounts.pyth_sol_account.to_account_info(),
+                system_program: ctx.accounts.system_program.to_account_info(),
+                token_program: ctx.accounts.token_program.to_account_info(),
+                rent: ctx.accounts.rent.to_account_info()
+            };
+            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            cbs_protocol::cpi::swap_token_to_token(cpi_ctx)?;
+        }
+   
+        let reward = total_price - borrowed_lpusd * usdc_price;
+        
+        let auction_account = &mut ctx.accounts.auction_account;
+        let auction_total = usdc_price * auction_account.lpusd_amount;
+        let auction_percent = auction_account.reward_percent + reward * 100 / auction_total;
+
+
         Ok(())
     }
 
+    pub fn liquidate (
+        ctx: Context<Liquidate>
+    ) -> Result<()> {
+        Ok(())
+    }
     pub fn withdraw_lpusd(
         ctx: Context<WithdrawLpUSD>,
         amount: u64
@@ -313,10 +375,24 @@ pub struct Liquidate<'info> {
     #[account(mut)]
     pub auction_account: Account<'info, AuctionStateAccount>,
     #[account(mut)]
-    pub liquidator: Account<'info, UserAccount>,
+    pub liquidator: Box<Account<'info, UserAccount>>,
     #[account(mut)]
     pub cbs_account: Account<'info, StateAccount>,
     pub cbs_program: Program<'info, CbsProtocol>,
+    
+    pub swap_lpusd: Account<'info, TokenAccount>,
+    pub swap_lpsol: Account<'info, TokenAccount>,
+    pub swap_btc: Account<'info, TokenAccount>,
+    pub swap_usdc: Account<'info, TokenAccount>,
+
+    #[account(mut)]
+    pub btc_mint: Account<'info,Mint>,
+    #[account(mut)]
+    pub usdc_mint: Account<'info,Mint>,
+    #[account(mut)]
+    pub lpsol_mint: Account<'info,Mint>,
+    #[account(mut)]
+    pub lpusd_mint: Account<'info,Mint>,
 
     pub auction_lpusd: Account<'info, TokenAccount>,
     pub auction_lpsol: Account<'info, TokenAccount>,
