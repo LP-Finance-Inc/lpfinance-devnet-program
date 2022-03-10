@@ -324,6 +324,77 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "liquidateCollateral",
+      "accounts": [
+        {
+          "name": "userAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stateAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "auctionLpusd",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "auctionLpsol",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "auctionBtc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "auctionUsdc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "cbsLpusd",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "cbsLpsol",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "cbsBtc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "cbsUsdc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -350,6 +421,34 @@
           {
             "name": "owner",
             "type": "publicKey"
+          },
+          {
+            "name": "totalBorrowedLpusd",
+            "type": "u64"
+          },
+          {
+            "name": "totalBorrowedLpsol",
+            "type": "u64"
+          },
+          {
+            "name": "totalDepositedSol",
+            "type": "u64"
+          },
+          {
+            "name": "totalDepositedUsdc",
+            "type": "u64"
+          },
+          {
+            "name": "totalDepositedBtc",
+            "type": "u64"
+          },
+          {
+            "name": "totalDepositedLpsol",
+            "type": "u64"
+          },
+          {
+            "name": "totalDepositedLpusd",
+            "type": "u64"
           },
           {
             "name": "lpsolMint",
@@ -382,6 +481,10 @@
           {
             "name": "poolLpusd",
             "type": "publicKey"
+          },
+          {
+            "name": "liquidationRun",
+            "type": "bool"
           }
         ]
       }
@@ -391,6 +494,14 @@
       "type": {
         "kind": "struct",
         "fields": [
+          {
+            "name": "borrowedLpusd",
+            "type": "u64"
+          },
+          {
+            "name": "borrowedLpsol",
+            "type": "u64"
+          },
           {
             "name": "btcAmount",
             "type": "u64"

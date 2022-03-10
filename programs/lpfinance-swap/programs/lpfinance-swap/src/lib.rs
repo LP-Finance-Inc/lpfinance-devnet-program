@@ -1,10 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{program::invoke, system_instruction };
 use pyth_client;
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token::{self, Mint, MintTo, Transfer, Token, TokenAccount }
-};
+use anchor_spl::token::{self, Mint, Transfer, Token, TokenAccount };
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -63,7 +60,7 @@ pub mod lpfinance_swap {
         let quote_total = quote_price * quote_amount;
 
         // destination token
-        let pyth_price_info = &ctx.accounts.pyth_del_account;
+        let pyth_price_info = &ctx.accounts.pyth_dest_account;
         let pyth_price_data = &pyth_price_info.try_borrow_data()?;
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
 
@@ -85,10 +82,10 @@ pub mod lpfinance_swap {
     }
 
     pub fn swap_token_to_sol(
-        ctx: Context<SwapSOLToToken>,
+        ctx: Context<SwapTokenToSOL>,
         quote_amount: u64
     ) -> Result<()> {
-        if **ctx.accounts.user_quote.amount < quote_amount {
+        if ctx.accounts.user_quote.amount < quote_amount {
             return Err(ErrorCode::InsufficientAmount.into());
         }
 
@@ -110,7 +107,7 @@ pub mod lpfinance_swap {
         let quote_total = quote_price * quote_amount;
 
         // destination token
-        let pyth_price_info = &ctx.accounts.pyth_del_account;
+        let pyth_price_info = &ctx.accounts.pyth_dest_account;
         let pyth_price_data = &pyth_price_info.try_borrow_data()?;
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
 
@@ -138,7 +135,7 @@ pub mod lpfinance_swap {
         ctx: Context<SwapTokenToToken>,
         quote_amount: u64
     ) -> Result<()> {
-        if **ctx.accounts.user_quote.amount < quote_amount {
+        if ctx.accounts.user_quote.amount < quote_amount {
             return Err(ErrorCode::InsufficientAmount.into());
         }
 
@@ -151,7 +148,7 @@ pub mod lpfinance_swap {
         let quote_total = quote_price * quote_amount;
 
         // destination token
-        let pyth_price_info = &ctx.accounts.pyth_del_account;
+        let pyth_price_info = &ctx.accounts.pyth_dest_account;
         let pyth_price_data = &pyth_price_info.try_borrow_data()?;
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
 
@@ -184,6 +181,7 @@ pub mod lpfinance_swap {
 }
 
 #[derive(Accounts)]
+#[instruction(swap_name: String)]
 pub struct Initialize<'info> {
     // Token program authority
     #[account(mut)]
@@ -199,12 +197,14 @@ pub struct Initialize<'info> {
     pub usdc_mint: Box<Account<'info, Mint>>,
     pub btc_mint: Box<Account<'info, Mint>>,
     #[account(mut,
-        seeds = [protocal_name.as_bytes(), b"lpsol_mint".as_ref()]
+        seeds = [swap_name.as_bytes(), b"lpsol_mint".as_ref()],
+        bump
     )]
     pub lpsol_mint: Box<Account<'info, Mint>>,
 
     #[account(mut,
-        seeds = [protocal_name.as_bytes(), b"lpusd_mint".as_ref()],
+        seeds = [swap_name.as_bytes(), b"lpusd_mint".as_ref()],
+        bump
     )]
     pub lpusd_mint: Box<Account<'info, Mint>>,
 
@@ -240,9 +240,8 @@ pub struct SwapSOLToToken<'info> {
     pub swap_pool: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub dest_mint: Account<'info,Mint>,
-    pub pyth_btc_account: AccountInfo<'info>,
-    pub pyth_usdc_account: AccountInfo<'info>,
-    pub pyth_sol_account: AccountInfo<'info>,
+    pub pyth_quote_account: AccountInfo<'info>,
+    pub pyth_dest_account: AccountInfo<'info>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -267,7 +266,7 @@ pub struct SwapTokenToSOL<'info> {
     #[account(
         mut,
         constraint = quote_pool.owner == state_account.key(),
-        constraint = quote_pool.mint == dest_mint.key()
+        constraint = quote_pool.mint == quote_mint.key()
     )]
     pub quote_pool : Box<Account<'info, TokenAccount>>,
     #[account(mut,
@@ -276,9 +275,8 @@ pub struct SwapTokenToSOL<'info> {
     pub swap_pool: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub quote_mint: Account<'info,Mint>,
-    pub pyth_btc_account: AccountInfo<'info>,
-    pub pyth_usdc_account: AccountInfo<'info>,
-    pub pyth_sol_account: AccountInfo<'info>,
+    pub pyth_quote_account: AccountInfo<'info>,
+    pub pyth_dest_account: AccountInfo<'info>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -309,9 +307,14 @@ pub struct SwapTokenToToken<'info> {
     pub quote_pool : Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub quote_mint: Account<'info,Mint>,
-    pub pyth_btc_account: AccountInfo<'info>,
-    pub pyth_usdc_account: AccountInfo<'info>,
-    pub pyth_sol_account: AccountInfo<'info>,
+    #[account(mut)]
+    pub dest_mint: Account<'info,Mint>,
+    #[account(mut)]
+    pub user_dest : Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub dest_pool : Box<Account<'info, TokenAccount>>,
+    pub pyth_quote_account: AccountInfo<'info>,
+    pub pyth_dest_account: AccountInfo<'info>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
