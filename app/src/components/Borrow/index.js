@@ -1,4 +1,13 @@
 import React, { useEffect, useState } from 'react';
+
+import {
+    parseMappingData,
+    parsePriceData,
+    parseProductData,
+    PythConnection,
+    getPythProgramKeyForCluster,
+    PriceStatus
+} from "@pythnetwork/client";
 import * as anchor from '@project-serum/anchor';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token'
@@ -39,6 +48,9 @@ export const BorrowComponent = () => {
     const [depositAmount, setDepositAmount] = useState('');
     const [borrowAmount, setBorrowAmount] = useState('');
 
+    const [solPrice, setSolPrice] = useState('');
+
+
     useEffect(async () => {
         if (!publicKey) {
             return;
@@ -46,6 +58,39 @@ export const BorrowComponent = () => {
         await getInfo();
         // eslint-disable-next-line 
     }, [publicKey])
+
+    useEffect(() => {
+        if (!publicKey) {
+            return;
+        }
+        getPythPrice();
+    }, [publicKey]);
+
+    const getPythPrice = () => {
+        const connection = new Connection(NETWORK, "processed");
+        // mainnet-beta, devnet, testnet
+        const pythConnection = new PythConnection(connection, getPythProgramKeyForCluster("devnet"))
+        if(pythConnection === undefined) return;
+        pythConnection.onPriceChange((product, price) => {
+            // SRM/USD: $8.68725 ±$0.0131
+            if (price.price && price.confidence) {
+                console.log(product.symbol.toString())
+                if (product.symbol.toString() === "Crypto.SOL/USD") {
+                    setSolPrice(price.price.toString())
+                }
+                // if (product.symbol.toString() === "Crypto.BTC/USD") {
+                //     setSolPrice(price.price.toString())
+                // }
+                if (product.symbol.toString() === "Crypto.USDC/USD") {
+                    setSolPrice(price.price.toString())
+                }
+            } else {
+                // Not avaiable to fetch price from pyth network.
+            }
+        })
+        // // Start listening for price change events.
+        pythConnection.start()
+    }
     
     const getInfo = async () => {
         try {
@@ -79,11 +124,15 @@ export const BorrowComponent = () => {
 
             console.log("Total rent LpSOL:", convert_from_wei(programData.totalBorrowedLpsol.toString()));
             console.log("Total rent LpUSD:", convert_from_wei(programData.totalBorrowedLpusd.toString()));
+
             console.log("Total deposited SOL:", convert_from_wei(programData.totalDepositedSol.toString()));
             console.log("Total deposited USDC:", convert_from_wei(programData.totalDepositedUsdc.toString()));
             console.log("Total deposited BTC:", convert_from_wei(programData.totalDepositedBtc.toString()));
             console.log("Total deposited LpSOL:", convert_from_wei(programData.totalDepositedLpsol.toString()));
             console.log("Total deposited LpUSD:", convert_from_wei(programData.totalDepositedLpusd.toString()));
+
+            // const SOL_PRICE  = from pyth // 
+            // const total_price = convert_from_wei(programData.totalDepositedSol) * SOL_PRICE
         } catch (err) {
             console.log(err);
         }
@@ -425,6 +474,10 @@ export const BorrowComponent = () => {
     
     return (
         <div>  
+            <div>
+                SOL price:
+            </div>
+            <div>{ solPrice }</div>
             <div>
                 <p>Please enter the amount of token to deposit</p>
                 <input type="text" value={ depositAmount } onChange={(e) => setDepositAmount(e.target.value)}/>

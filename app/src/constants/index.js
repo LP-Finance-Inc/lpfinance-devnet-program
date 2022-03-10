@@ -5,23 +5,6 @@ export const NETWORK = 'https://api.devnet.solana.com';
 export const cbs_name = "cbs_pool03";
 
 // 2022-03-01 devnet
-// ProgramID 3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM
-// State-Account: 6ZitbU1D6EZBYqKHq74zCkzoZBvGDGdgzKH1oUh5RM8j
-// Pool-USDC: GpzZjubiozLk9K6obfm1dcnKQSqqZGn69dooX2Q1C3Uk
-// Pool-BTC: 2tDLPfwz7KCtzSBvUZcsuwmDSZBvy7nT7JEYfQTWApzn
-// Pool-LpSOL: 8sB3gqYZ13J4hTmhQ6P5XRcHvoviwymU8Ru9dE2MUrcB
-// Pool-LpUSD: GXHTqCiQuFc6k5UT8Rc4aS1gVTr45sTP1NjhQMMtSK82
-// LpSOL-Mint: FCSUDXzfqc393wVcv4tWBU4LgRhJeDi8YA6BGTs3qVPP
-// LpUSD-Mint: AL9fyDTSmJavYxjftxBHxkLtwv9FcsUJfVvEheW6vfdq
-// Bumps {
-//   stateAccount: 254,
-//   lpusdMint: 255,
-//   lpsolMint: 254,
-//   poolUsdc: 252,
-//   poolBtc: 254,
-//   poolLpsol: 255,
-//   poolLpusd: 253
-// }
 
 export const bumps = {
     stateAccount: 254,
