@@ -41,6 +41,17 @@ pub mod cbs_protocol {
         state_account.pool_lpusd = ctx.accounts.pool_lpusd.key();
         state_account.owner = ctx.accounts.authority.key();
 
+        state_account.total_borrowed_lpsol = 0;
+        state_account.total_borrowed_lpusd = 0;
+
+        state_account.total_deposited_sol = 0;
+        state_account.total_deposited_usdc = 0;
+        state_account.total_deposited_btc = 0;
+        state_account.total_deposited_lpsol = 0;
+        state_account.total_deposited_lpusd = 0;
+
+        state_account.liquidation_run = false;
+
         Ok(())
     }
 
@@ -78,21 +89,26 @@ pub mod cbs_protocol {
         token::transfer(cpi_ctx, amount)?;
 
         let user_account =&mut ctx.accounts.user_account;
+        let state_account = &mut ctx.accounts.state_account;
 
-        if ctx.accounts.user_collateral.mint == ctx.accounts.state_account.btc_mint {
+        if ctx.accounts.user_collateral.mint == state_account.btc_mint {
             user_account.btc_amount = user_account.btc_amount + amount;
+            state_account.total_deposited_btc = state_account.total_deposited_btc + amount;
         }
 
-        if ctx.accounts.user_collateral.mint == ctx.accounts.state_account.usdc_mint {
+        if ctx.accounts.user_collateral.mint == state_account.usdc_mint {
             user_account.usdc_amount = user_account.usdc_amount + amount;
+            state_account.total_deposited_usdc = state_account.total_deposited_usdc + amount;
         }
 
-        if ctx.accounts.user_collateral.mint == ctx.accounts.state_account.lpusd_mint {
+        if ctx.accounts.user_collateral.mint == state_account.lpusd_mint {
             user_account.lpusd_amount = user_account.lpusd_amount + amount;
+            state_account.total_deposited_lpusd = state_account.total_deposited_lpusd + amount;
         }
 
-        if ctx.accounts.user_collateral.mint == ctx.accounts.state_account.lpsol_mint {
+        if ctx.accounts.user_collateral.mint == state_account.lpsol_mint {
             user_account.lpsol_amount = user_account.lpsol_amount + amount;
+            state_account.total_deposited_lpsol = state_account.total_deposited_lpsol + amount;
         }
 
         Ok(())
@@ -122,7 +138,10 @@ pub mod cbs_protocol {
         )?;
 
         let user_account = &mut ctx.accounts.user_account;
+        let state_account = &mut ctx.accounts.state_account;
+
         user_account.sol_amount = user_account.sol_amount + amount;
+        state_account.total_deposited_sol = state_account.total_deposited_sol + amount;
 
         Ok(())
     }
@@ -137,6 +156,7 @@ pub mod cbs_protocol {
         // Borrowable TotalPrice. Need to be calculated with LTV
         let mut total_price = 0;
         let user_account = &mut ctx.accounts.user_account;
+        let state_account = &mut ctx.accounts.state_account;
 
         // BTC price
         let pyth_price_info = &ctx.accounts.pyth_btc_account;
@@ -175,8 +195,10 @@ pub mod cbs_protocol {
         msg!("Request amount: !!{:?}!!", amount.to_string());
         if islpusd {
             borrow_value = borrow_value * lpusd_price;
+            state_account.total_borrowed_lpusd = state_account.total_borrowed_lpusd + amount;
         } else {
             borrow_value = borrow_value * lpsol_price;
+            state_account.total_borrowed_lpsol = state_account.total_borrowed_lpsol + amount;
         }
 
         msg!("Price SOL: !!{:?}!!", sol_price.to_string());
@@ -273,6 +295,12 @@ pub mod cbs_protocol {
             return Err(ErrorCode::BorrowFailed.into());
         }
 
+        if islpusd {
+            user_account.borrowed_lpusd = user_account.borrowed_lpusd + amount;
+        } else {
+            user_account.borrowed_lpsol = user_account.borrowed_lpsol + amount;
+        }
+
         Ok(())
     }
 
@@ -333,14 +361,31 @@ pub mod cbs_protocol {
             let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
             token::transfer(cpi_ctx, usdc_amount)?;
         }
+
         user_account.lpusd_amount = 0;
         user_account.lpsol_amount = 0;
         user_account.usdc_amount = 0;
         user_account.btc_amount = 0;
         user_account.borrowed_lpusd = 0;
+        user_account.borrowed_lpsol = 0;
         
         Ok(())
     }
+
+    pub fn get_tv(ctx: Context<GetTV>) -> Result<(u64)> {
+        let state_account = ctx.accounts.state_account;
+        Ok((2));
+    }
+}
+
+#[derive(Accounts)]
+pub struct GetTV<'info> {
+    // state account for user's wallet
+    #[account(mut,
+        seeds = [state_account.protocol_name.as_ref()],
+        bump= state_account.bumps.state_account
+    )]
+    pub state_account: Box<Account<'info, StateAccount>>,
 }
 
 #[derive(Accounts)]
@@ -585,6 +630,13 @@ pub struct StateAccount {
     pub protocol_name: [u8; 10],
     pub bumps: ProtocolBumps,
     pub owner: Pubkey,
+    pub total_borrowed_lpusd: u64,
+    pub total_borrowed_lpsol: u64,
+    pub total_deposited_sol: u64,
+    pub total_deposited_usdc: u64,
+    pub total_deposited_btc: u64,
+    pub total_deposited_lpsol: u64,
+    pub total_deposited_lpusd: u64,
     pub lpsol_mint: Pubkey,
     pub lpusd_mint: Pubkey,
     pub btc_mint: Pubkey,
@@ -592,13 +644,15 @@ pub struct StateAccount {
     pub pool_btc: Pubkey,
     pub pool_usdc: Pubkey,
     pub pool_lpsol: Pubkey,
-    pub pool_lpusd: Pubkey
+    pub pool_lpusd: Pubkey,
+    pub liquidation_run: bool
 }
 
 #[account]
 #[derive(Default)]
 pub struct UserAccount {
     pub borrowed_lpusd: u64,
+    pub borrowed_lpsol: u64,
     pub btc_amount: u64,
     pub sol_amount: u64,
     pub usdc_amount: u64,

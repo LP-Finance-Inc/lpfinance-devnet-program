@@ -2,59 +2,35 @@ import React, { useEffect, useState } from 'react';
 import * as anchor from '@project-serum/anchor';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token'
-
 import idl from '../../idls/cbs_protocol.json';
+import {
+    bumps,
+    stateAccount,
+    poolUsdc,
+    poolBtc,
+    poolLpsol,
+    poolLpusd,
+    lpsolMint,
+    lpusdMint,
+    usdcMint,
+    btcMint,
+    pythBtcAccount, 
+    pythUsdcAccount,
+    pythSolAccount,
+    cbs_name,
+    NETWORK
+} from '../../constants';
+import {
+    convert_from_wei,
+    convert_to_wei,
+    getBalance,
+    readStateAccount,
+    readUserAccount
+} from '../../helpers';
 const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
 
-const NETWORK = 'https://api.devnet.solana.com';
-
-// 2022-03-01 devnet
-// ProgramID 3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM
-// State-Account: ES4ob9B6ngcM5FXDShXA6SHUvFSv1DQiZY5bG9NakXaR
-// Pool-USDC: 3FT6VJn3kPAdaBjnNq9oxk47cJVtfyrt8EFFWwArxtMX
-// Pool-BTC: HtrG19tdTKXhJHYFLD6PmjZN22Xi9o9EyVq49P6BBjCj
-// Pool-LpSOL: 8fYcxYJxCWrQtoZuCrwnBU6sPbbnTW5eWpM7S1spsvZR
-// Pool-LpUSD: 5Pb9Cq3Ho5w4JDLvZFjXQyahcpbSVMEpPHT2bAN4HiPy
-// LpSOL-Mint: CCFfxDcVY6iCd4EiocQNymZRhZapuGrxVP4TK1PJrVqh
-// LpUSD-Mint: C6DHbFE8eFmiiZPcY1mTPaG928q6cXuE9vD2NHuDL5TH
-// Bumps {
-//   stateAccount: 254,
-//   lpusdMint: 253,
-//   lpsolMint: 255,
-//   poolUsdc: 255,
-//   poolBtc: 255,
-//   poolLpsol: 255,
-//   poolLpusd: 253
-// }
-
-const bumps = {
-    stateAccount: 254,
-    lpusdMint: 253,
-    lpsolMint: 255,
-    poolUsdc: 255,
-    poolBtc: 255,
-    poolLpsol: 255,
-    poolLpusd: 253
-}
-const stateAccount = new PublicKey("ES4ob9B6ngcM5FXDShXA6SHUvFSv1DQiZY5bG9NakXaR");
-const usdcMint = new PublicKey("2Q1WAAgnpEox5Y4b6Y8YyXVwFNhDdGot467XfvdBJaPf");
-const btcMint = new PublicKey("Hv96pk4HkhGcbNxkBvb7evTU88KzedvgVy2oddBB1ySB");
-const poolUsdc = new PublicKey("3FT6VJn3kPAdaBjnNq9oxk47cJVtfyrt8EFFWwArxtMX");
-const poolBtc = new PublicKey("HtrG19tdTKXhJHYFLD6PmjZN22Xi9o9EyVq49P6BBjCj");
-const poolLpsol = new PublicKey("8fYcxYJxCWrQtoZuCrwnBU6sPbbnTW5eWpM7S1spsvZR");
-const poolLpusd = new PublicKey("5Pb9Cq3Ho5w4JDLvZFjXQyahcpbSVMEpPHT2bAN4HiPy");
-const lpsolMint = new PublicKey("CCFfxDcVY6iCd4EiocQNymZRhZapuGrxVP4TK1PJrVqh");
-const lpusdMint = new PublicKey("C6DHbFE8eFmiiZPcY1mTPaG928q6cXuE9vD2NHuDL5TH");
-
-// ======> PYTH
-const pythBtcAccount = new PublicKey("HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J"); // 3m1y5h2uv7EQL3KaJZehvAJa4yDNvgc5yAdL9KPMKwvk
-const pythUsdcAccount = new PublicKey("5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KXgy7"); // 6NpdXrQEpmDZ3jZKmM2rhdmkd3H6QAk23j2x8bkXcHKA
-const pythSolAccount = new PublicKey("J83w4HKfqxwcq3BEMMkPFSppX3gqekLyLJBexebFVkix"); // 3Mnn2fX6rQyUsyELYms1sBJyChWofzSNRoqYzvgMVz5E
-// ======> PYTH
-
-const protocol_name = "cbs_pool02";
-const netconfig = "devnet";
-const connection = new anchor.web3.Connection(anchor.web3.clusterApiUrl(netconfig));
+// const netconfig = "devnet";
+// const connection = new anchor.web3.Connection(anchor.web3.clusterApiUrl(netconfig));
 
 export const BorrowComponent = () => {
     const wallet = useWallet();
@@ -63,85 +39,55 @@ export const BorrowComponent = () => {
     const [depositAmount, setDepositAmount] = useState('');
     const [borrowAmount, setBorrowAmount] = useState('');
 
-    const convert_to_wei = (val) => (parseFloat(val) * 1e9).toString();
-    const convert_from_wei = (val) => parseFloat(val) / 1e9;
-
-    // useEffect(async () => {
-    //     if (!publicKey) {
-    //         return;
-    //     }
-    //     await getBalance();
-    //     // eslint-disable-next-line 
-    // }, [publicKey])
-
-    // Get token balance of wallet and pool
-    // const getBalance = async () => {
-    //     connection.getTokenAccountsByOwner(publicKey, { "mint": usdcMint }).then(res => {
-    //         if (res.value.length !== 0) {
-    //             connection.getParsedAccountInfo(new anchor.web3.PublicKey(res.value[0].pubkey.toString())).then(info => {
-    //                 if(info && info.value) {
-    //                 //@ts-expect-error
-    //                 console.log("Wallet Balance", info.value.data.parsed.info.tokenAmount.uiAmount)
-    //                 }
-    //             })
-    //         } else {
-    //             console.log("Wallet Balance", 0);
-    //             // setUsdcBalance(0)
-    //         }
-    //     });
-        
-    //     connection.getTokenAccountsByOwner(storeAccount, { "mint": seededMint }).then(res => {
-    //         if (res.value.length !== 0) {
-    //             connection.getParsedAccountInfo(new anchor.web3.PublicKey(res.value[0].pubkey.toString())).then(info => {
-    //                 if(info && info.value) {
-    //                     //@ts-expect-error
-    //                     console.log("Pool Balance", info.value.data.parsed.info.tokenAmount.uiAmount);
-    //                 }
-    //             })
-    //         } else {
-    //             // setVeraBalance(0)
-    //             console.log("Pool Balance 2", 0);
-    //         }
-    //     });
-
-    //     await getUserInfo();
-
-    // }
-
-    // const getStakingInfo = async () => {
-    //     try {
-    //         const provider = await getProvider();
-    //         anchor.setProvider(provider);
-
-    //         // address of deployed program
-    //         const programId = new PublicKey(idl.metadata.address);
-        
-    //         // Generate the program client from IDL.
-    //         const program = new anchor.Program(idl, programId);
+    useEffect(async () => {
+        if (!publicKey) {
+            return;
+        }
+        await getInfo();
+        // eslint-disable-next-line 
+    }, [publicKey])
+    
+    const getInfo = async () => {
+        try {
+            // Get tokens balance of user's wallet
+            const btcBalance = await getBalance(publicKey, btcMint);
+            const usdcBalance = await getBalance(publicKey, usdcMint);
+            const lpsolBalance = await getBalance(publicKey, lpsolMint);
+            const lpusdBalance = await getBalance(publicKey, lpusdMint);
+    
+            console.log("Btc balance:", btcBalance)
+            console.log("USDC balance:", usdcBalance)
+            console.log("LpSOL balance:", lpsolBalance)
+            console.log("LpUSD balance:", lpusdBalance)
             
-    //         const seed0 = publicKey.toBase58().substring(0, 22);
-    //         const seed1 = publicKey.toBase58().substring(22);
-    //         // Find PDA from `seed` for state account
-    //         const [stakeAccount, bump] = await PublicKey.findProgramAddress(
-    //             [Buffer.from(protocol_name), Buffer.from(seed0), Buffer.from(seed1)],
-    //             program.programId
-    //         );
+            // Get info from user's state account
+            const provider = await getProvider();
+            const accountData = await readUserAccount(provider, publicKey);
+            console.log("Account Data:", accountData);
+            console.log("Borrowed LpSOL:", convert_from_wei(accountData.borrowedLpsol.toString()));
+            console.log("Borrowed LpUSD:", convert_from_wei(accountData.borrowedLpusd.toString()));
 
-    //         const accountData = await program.account.stakeInfoAccount.fetch(stakeAccount);
-    //         console.log("YOUR Staked SEEDED", convert_from_wei(accountData.stakedAmount.toString()))
+            console.log("Deposited LpSOL:", convert_from_wei(accountData.lpsolAmount.toString()));
+            console.log("Deposited LpUSD:", convert_from_wei(accountData.lpusdAmount.toString()));
+            console.log("Deposited SOL:", convert_from_wei(accountData.solAmount.toString()));
+            console.log("Deposited USDC:", convert_from_wei(accountData.usdcAmount.toString()));
+            console.log("Deposited BTC:", convert_from_wei(accountData.btcAmount.toString()));
 
-    //         const slot = await connection.getSlot();
-    //         const curBlockTime = await connection.getBlockTime(slot);
-    //         const stakingTerm = curBlockTime - accountData.lastStakeTs;
-    //         const stakingDay = Math.floor((stakingTerm > 0 ? stakingTerm: 0) / 86400.0);
-    //         const earned_amount = stakingDay * convert_from_wei(accountData.stakedAmount.toString()) * DAILY_REWARD_RATE/ 10000
-    //         console.log("Deposit TIME", curBlockTime, accountData.lastStakeTs.toString(), stakingTerm, stakingDay, earned_amount.toFixed(6))
-            
-    //     } catch (err) {
-    //         console.log(err)
-    //     }
-    // }
+            // Get info from cbs program's state account
+            const programData = await readStateAccount(provider, stateAccount);
+            console.log("Program Data:", programData);
 
+            console.log("Total rent LpSOL:", convert_from_wei(programData.totalBorrowedLpsol.toString()));
+            console.log("Total rent LpUSD:", convert_from_wei(programData.totalBorrowedLpusd.toString()));
+            console.log("Total deposited SOL:", convert_from_wei(programData.totalDepositedSol.toString()));
+            console.log("Total deposited USDC:", convert_from_wei(programData.totalDepositedUsdc.toString()));
+            console.log("Total deposited BTC:", convert_from_wei(programData.totalDepositedBtc.toString()));
+            console.log("Total deposited LpSOL:", convert_from_wei(programData.totalDepositedLpsol.toString()));
+            console.log("Total deposited LpUSD:", convert_from_wei(programData.totalDepositedLpusd.toString()));
+        } catch (err) {
+            console.log(err);
+        }
+    }
     // GET provider
     const getProvider = async () => {
         const network = NETWORK;
@@ -179,8 +125,8 @@ export const BorrowComponent = () => {
         // const seed1 = userAuthority.toBase58().substring(22);
         // Find PDA from `seed` for state account
         const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
-            // [Buffer.from(protocol_name), Buffer.from(seed0), Buffer.from(seed1)],
-            [Buffer.from(protocol_name), Buffer.from(userAuthority.toBuffer())],
+            // [Buffer.from(cbs_name), Buffer.from(seed0), Buffer.from(seed1)],
+            [Buffer.from(cbs_name), Buffer.from(userAuthority.toBuffer())],
             program.programId
         );
         
@@ -231,7 +177,7 @@ export const BorrowComponent = () => {
             }
         }
 
-        console.log("Passed", accountData)
+        console.log("Passed", accountData, accountData.owner.toBase58(), userAuthority.toBase58())
         if (accountData == null || accountData == undefined) {
             return;
         }
@@ -255,7 +201,7 @@ export const BorrowComponent = () => {
                         rent: SYSVAR_RENT_PUBKEY
                     }
                 })
-                // await getBalance();
+                await getInfo();
             } catch (err) {
                 console.log(err);
             }
@@ -278,8 +224,8 @@ export const BorrowComponent = () => {
         const program = new anchor.Program(idl, programId);
         
         const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
-            // [Buffer.from(protocol_name), Buffer.from(seed0), Buffer.from(seed1)],
-            [Buffer.from(protocol_name), Buffer.from(userAuthority.toBuffer())],
+            // [Buffer.from(cbs_name), Buffer.from(seed0), Buffer.from(seed1)],
+            [Buffer.from(cbs_name), Buffer.from(userAuthority.toBuffer())],
             program.programId
         );
 
@@ -391,7 +337,7 @@ export const BorrowComponent = () => {
                         rent: SYSVAR_RENT_PUBKEY
                     }
                 })
-                // await getBalance();
+                await getInfo();
             } catch (err) {
                 console.log(err);
             }
@@ -416,8 +362,8 @@ export const BorrowComponent = () => {
         const program = new anchor.Program(idl, programId);
         
         const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
-            // [Buffer.from(protocol_name), Buffer.from(seed0), Buffer.from(seed1)],
-            [Buffer.from(protocol_name), Buffer.from(userAuthority.toBuffer())],
+            // [Buffer.from(cbs_name), Buffer.from(seed0), Buffer.from(seed1)],
+            [Buffer.from(cbs_name), Buffer.from(userAuthority.toBuffer())],
             program.programId
         );
         
@@ -465,7 +411,7 @@ export const BorrowComponent = () => {
                         rent: SYSVAR_RENT_PUBKEY
                     }
                 })
-                // await getBalance();
+                await getInfo();
             } catch (err) {
                 console.log(err);
             }
