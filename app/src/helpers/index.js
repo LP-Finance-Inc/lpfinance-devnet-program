@@ -8,6 +8,7 @@ const { cbs_name } = CBS_Contants;
 export const convert_to_wei = (val) => (parseFloat(val) * 1e9).toString();
 export const convert_from_wei = (val) => parseFloat(val) / 1e9; 
 
+// Get the token's amount from user wallet
 export const getBalance = async (account, mint) => {
     const connection = new Connection(NETWORK, "processed");
     const res = await connection.getTokenAccountsByOwner(account, { "mint": mint });    
@@ -28,6 +29,8 @@ export const getSOLBalance = async (account) => {
     return convert_from_wei(solBalance);
 }
 
+// Get the infos from user wallet' state account
+// as infos, deposited collateral amounts and borrowed tokens amount
 export const readUserAccount = async (provider, publicKey) => {
     try {
         anchor.setProvider(provider);
@@ -52,6 +55,8 @@ export const readUserAccount = async (provider, publicKey) => {
 }
 
 // CBS program
+// Get infos from program account
+// as infos, total deposited tokens' amount and the token amount to rent to user's wallet
 export const readStateAccount = async (provider, stateAccount) => {
     try {
         anchor.setProvider(provider);
