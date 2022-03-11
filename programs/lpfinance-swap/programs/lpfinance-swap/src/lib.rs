@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::{program::invoke, program::invoke_signed, system_instruction };
+use anchor_lang::solana_program::{program::invoke, system_instruction };
 use pyth_client;
 use anchor_spl::token::{self, Mint, Transfer, Token, TokenAccount };
 
@@ -142,27 +142,16 @@ pub mod lpfinance_swap {
 
 
         let transfer_amount = quote_total/dest_price;
+        let pool_balance = **ctx.accounts.state_account.to_account_info().lamports.borrow();
+        msg!("Pool Balance: !!{:?}!!", pool_balance.to_string());
 
-        let seeds = &[
-            ctx.accounts.state_account.swap_name.as_ref(),
-            &[ctx.accounts.state_account.bumps.state_account],
-        ];
-        let signer = &[&seeds[..]];
-        msg!("Sending Token: !!{:?}!!", transfer_amount.to_string());
+        if pool_balance < transfer_amount {
+            return Err(ErrorCode::InsufficientAmount.into());
+        }
 
-        invoke_signed(
-            &system_instruction::transfer(
-                ctx.accounts.sol_account.to_account_info().key,
-                ctx.accounts.user_authority.key,
-                transfer_amount
-            ),
-            &[
-                ctx.accounts.sol_account.to_account_info().clone(),
-                ctx.accounts.user_authority.to_account_info().clone(),
-                ctx.accounts.system_program.to_account_info().clone()
-            ],
-            signer
-        )?;
+        **ctx.accounts.state_account.to_account_info().try_borrow_mut_lamports()? -= transfer_amount;
+        **ctx.accounts.user_authority.try_borrow_mut_lamports()? += transfer_amount;
+        
         Ok(())
     }
 
@@ -330,8 +319,6 @@ pub struct SwapSOLToToken<'info> {
 pub struct SwapTokenToSOL<'info> {
     #[account(mut)]
     pub user_authority: Signer<'info>,
-    #[account(mut)]
-    pub sol_account: SystemAccount<'info>,
     // NOTE: this will also be SOL account.
     #[account(mut,
         seeds = [state_account.swap_name.as_ref()],

@@ -154,11 +154,6 @@
           "isSigner": true
         },
         {
-          "name": "solAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "stateAccount",
           "isMut": true,
           "isSigner": false

@@ -11,6 +11,7 @@ import {
     readStateAccount,
     readUserAccount
 } from '../../helpers';
+import { getTokensPriceList } from '../../helpers/price';
 const {
     bumps, stateAccount, poolUsdc,  poolBtc,
     poolLpsol, poolLpusd, cbs_name
@@ -21,7 +22,6 @@ const {
     pythUsdcAccount, pythSolAccount, NETWORK
 } = COMMON_Contants;
 
-import { getTokensPriceList } from '../../helpers/price';
 
 const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
 

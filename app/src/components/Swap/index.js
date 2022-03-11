@@ -177,7 +177,6 @@ export const Swap = () => {
                 accounts: {
                     userAuthority,
                     stateAccount,
-                    solAccount: stateAccount,
                     quoteMint: getTokenMint(keyword),
                     userQuote,
                     quotePool: getPoolMint(keyword),
