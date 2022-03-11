@@ -1,5 +1,5 @@
 import React from 'react'
-import { BorrowComponent } from '../../components';
+import { BorrowComponent, Swap } from '../../components';
 import {
     WalletModalProvider,
     WalletDisconnectButton,
@@ -14,12 +14,13 @@ export default function Home() {
     
     return (
         <div>
-            CBS Protocal
+            <h1>Lp-finance</h1>
             <WalletModalProvider>
                 {
                     publicKey ? 
                         <div>
                             <BorrowComponent /> 
+                            <Swap />
                             <WalletDisconnectButton /> 
                         </div>
                     :

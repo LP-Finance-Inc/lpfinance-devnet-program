@@ -24,10 +24,7 @@ const {
 
 const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
 
-// const netconfig = "devnet";
-// const connection = new anchor.web3.Connection(anchor.web3.clusterApiUrl(netconfig));
-
-export const BorrowComponent = () => {
+export const Repayment = () => {
     const wallet = useWallet();
     const { publicKey } = wallet;
 
