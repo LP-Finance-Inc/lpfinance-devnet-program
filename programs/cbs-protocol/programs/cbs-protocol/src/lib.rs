@@ -371,11 +371,6 @@ pub mod cbs_protocol {
         
         Ok(())
     }
-
-    pub fn get_tv(ctx: Context<GetTV>) -> Result<(u64)> {
-        let state_account = ctx.accounts.state_account;
-        Ok((2));
-    }
 }
 
 #[derive(Accounts)]
