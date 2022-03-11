@@ -1,13 +1,4 @@
-import React, { useEffect, useState } from 'react';
-
-import {
-    parseMappingData,
-    parsePriceData,
-    parseProductData,
-    PythConnection,
-    getPythProgramKeyForCluster,
-    PriceStatus
-} from "@pythnetwork/client";
+import { useEffect, useState } from 'react';
 import * as anchor from '@project-serum/anchor';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token'
@@ -36,6 +27,7 @@ import {
     readStateAccount,
     readUserAccount
 } from '../../helpers';
+import { getTokensPriceList } from '../../helpers/price';
 const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
 
 // const netconfig = "devnet";
@@ -66,30 +58,40 @@ export const BorrowComponent = () => {
         getPythPrice();
     }, [publicKey]);
 
-    const getPythPrice = () => {
+    const getPythPrice = async () => {
         const connection = new Connection(NETWORK, "processed");
-        // mainnet-beta, devnet, testnet
-        const pythConnection = new PythConnection(connection, getPythProgramKeyForCluster("devnet"))
-        if(pythConnection === undefined) return;
-        pythConnection.onPriceChange((product, price) => {
-            // SRM/USD: $8.68725 ±$0.0131
-            if (price.price && price.confidence) {
-                console.log(product.symbol.toString())
-                if (product.symbol.toString() === "Crypto.SOL/USD") {
-                    setSolPrice(price.price.toString())
-                }
-                // if (product.symbol.toString() === "Crypto.BTC/USD") {
-                //     setSolPrice(price.price.toString())
-                // }
-                if (product.symbol.toString() === "Crypto.USDC/USD") {
-                    setSolPrice(price.price.toString())
-                }
-            } else {
-                // Not avaiable to fetch price from pyth network.
+        
+        const pricesData = await getTokensPriceList(connection, pythSolAccount);
+        
+        pricesData?.map((data, index) => {
+            if (!data) return;
+            // console.log(data)
+            if (data.Symbol == "Crypto.SOL/USD") {
+                setSolPrice(data.Price.toString())
             }
-        })
-        // // Start listening for price change events.
-        pythConnection.start()
+        });
+        // mainnet-beta, devnet, testnet
+        // const pythConnection = new PythConnection(connection, getPythProgramKeyForCluster("devnet"))
+        // if(pythConnection === undefined) return;
+        // pythConnection.onPriceChange((product, price) => {
+        //     // SRM/USD: $8.68725 ±$0.0131
+        //     if (price.price && price.confidence) {
+        //         console.log(product.symbol.toString())
+        //         if (product.symbol.toString() === "Crypto.SOL/USD") {
+        //             setSolPrice(price.price.toString())
+        //         }
+        //         // if (product.symbol.toString() === "Crypto.BTC/USD") {
+        //         //     setSolPrice(price.price.toString())
+        //         // }
+        //         if (product.symbol.toString() === "Crypto.USDC/USD") {
+        //             setSolPrice(price.price.toString())
+        //         }
+        //     } else {
+        //         // Not avaiable to fetch price from pyth network.
+        //     }
+        // })
+        // // // Start listening for price change events.
+        // pythConnection.start()
     }
     
     const getInfo = async () => {
