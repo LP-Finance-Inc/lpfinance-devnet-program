@@ -3,7 +3,9 @@ import * as anchor from '@project-serum/anchor';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token'
 import idl from '../../idls/lpusd_auction.json';
-import { CBS_Contants, Auction_Constants, COMMON_Contants } from '../../constants';
+import cbs_idl from '../../idls/cbs_protocol.json';
+
+import { CBS_Contants, SWAP_Contants, Auction_Constants, COMMON_Contants } from '../../constants';
 import {
     convert_from_wei,
     convert_to_wei,
@@ -163,6 +165,32 @@ export const Liqudate = () => {
         console.log("End transaction")
     }
     
+    // const liquidate = async () => {
+    //     try {
+    //         const auctionLpusd = poolLpusd;
+    //         const auctionLpsol = poolLpsol;
+    //         const auctionBtc = poolBtc;
+    //         const auctionUsdc = poolUsdc;
+
+    //         const cbsLpusd = CBS_Contants.poolLpusd;
+    //         const cbsLpsol = CBS_Contants.poolLpsol;
+    //         const cbsUsdc = CBS_Contants.poolUsdc;
+    //         const cbsBtc = CBS_Contants.poolBtc;
+
+    //         const swapLpusd = SWAP_Contants.poolLpusd;
+    //         const swapLpsol = SWAP_Contants.poolLpsol;
+    //         const swapBtc = SWAP_Contants.poolBtc;
+    //         const swapUsdc = SWAP_Contants.poolUsdc;
+
+    //         const cbsAccount = CBS_Contants.stateAccount;
+    //         const cbsProgram = new PublicKey(cbs_idl.metadata.address);
+    //         const 
+
+    //     } catch (err) {
+    //         console.log(err);
+    //     }
+    // }
+
     return (
         <div>  
             <h2>4) Liqudate</h2>
