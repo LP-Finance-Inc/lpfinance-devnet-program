@@ -1,5 +1,5 @@
 import React from 'react'
-import { BorrowComponent, Swap } from '../../components';
+import { BorrowComponent, Swap, Liqudate } from '../../components';
 import {
     WalletModalProvider,
     WalletDisconnectButton,
@@ -21,6 +21,7 @@ export default function Home() {
                         <div>
                             <BorrowComponent /> 
                             <Swap />
+                            <Liqudate />
                             <WalletDisconnectButton /> 
                         </div>
                     :

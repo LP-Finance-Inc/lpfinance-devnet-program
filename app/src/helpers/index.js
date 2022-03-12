@@ -2,10 +2,11 @@ import * as anchor from '@project-serum/anchor';
 import idl from '../idls/cbs_protocol.json';
 import auction_idl from '../idls/lpusd_auction.json';
 
-import { CBS_Contants, COMMON_Contants } from '../constants';
+import { Auction_Constants, CBS_Contants, COMMON_Contants } from '../constants';
 const { PublicKey, Connection } = anchor.web3;
 const { NETWORK } = COMMON_Contants;
 const { cbs_name } = CBS_Contants;
+const { auction_name } = Auction_Constants;
 
 export const convert_to_wei = (val) => (parseFloat(val) * 1e9).toString();
 export const convert_from_wei = (val) => parseFloat(val) / 1e9; 
@@ -103,11 +104,11 @@ export const readAuctionUserAccount = async (provider, publicKey) => {
         const program = new anchor.Program(auction_idl, programId); 
 
         const [userAccount, bump] = await PublicKey.findProgramAddress(
-            [Buffer.from(cbs_name), Buffer.from(publicKey.toBuffer())],
+            [Buffer.from(auction_name), Buffer.from(publicKey.toBuffer())],
             programId
         );
-
-        const accountData = await program.account.userStateAccount.fetch(userStateAccount);
+        console.log("readAuctionUserAccount", program.account)
+        const accountData = await program.account.userStateAccount.fetch(userAccount);
         return accountData;
     } catch (err) {
         console.log(err);

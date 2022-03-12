@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import * as anchor from '@project-serum/anchor';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token'
-import idl from '../../idls/lpfinance_swap.json';
+import idl from '../../idls/lpusd_auction.json';
 import { CBS_Contants, Auction_Constants, COMMON_Contants } from '../../constants';
 import {
     convert_from_wei,
@@ -42,15 +42,15 @@ export const Liqudate = () => {
             const provider = await getProvider();
             const accountData = await readAuctionUserAccount(provider, publicKey);
             console.log("Account Data:", accountData);
-            console.log("Deposited LpSOL:", convert_from_wei(accountData.lpusd_amount.toString()));
-            console.log("Discount Reward:", convert_from_wei(accountData.discount_reward.toString()));
+            console.log("Deposited LpSOL:", convert_from_wei(accountData.lpusdAmount.toString()));
+            console.log("Discount Reward:", convert_from_wei(accountData.discountReward.toString()));
 
             // Get info from cbs program's state account
             const programData = await readAuctionStateAccount(provider, stateAccount);
             console.log("Program Data:", programData);
 
-            console.log("Reward Percent:", convert_from_wei(programData.reward_percent.toString()));
-            console.log("Total deposited LpUSD:", convert_from_wei(programData.lpusd_amount.toString()));
+            console.log("Reward Percent:", programData.rewardPercent.toString());
+            console.log("Auction Total deposited LpUSD:", convert_from_wei(programData.lpusdAmount.toString()));
         } catch (err) {
             console.log(err);
         }
@@ -137,7 +137,7 @@ export const Liqudate = () => {
                 const deposit_amount = new anchor.BN(deposit_wei); // '100000000'
                 console.log("Deposit Amount:", deposit_amount.toString())
 
-                await program.rpc.deposit_lpusd(
+                await program.rpc.depositLpusd(
                     deposit_amount, {
                     accounts: {
                         userAuthority,
