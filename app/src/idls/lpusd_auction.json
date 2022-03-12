@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "name": "cbs_protocol",
+  "name": "lpusd_auction",
   "instructions": [
     {
       "name": "initialize",
@@ -26,6 +26,16 @@
           "isSigner": false
         },
         {
+          "name": "lpusdMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "lpsolMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "poolUsdc",
           "isMut": true,
           "isSigner": false
@@ -36,22 +46,12 @@
           "isSigner": false
         },
         {
-          "name": "lpsolMint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "lpusdMint",
+          "name": "poolLpusd",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "poolLpsol",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "poolLpusd",
           "isMut": true,
           "isSigner": false
         },
@@ -73,13 +73,13 @@
       ],
       "args": [
         {
-          "name": "protocolName",
+          "name": "auctionName",
           "type": "string"
         },
         {
           "name": "bumps",
           "type": {
-            "defined": "ProtocolBumps"
+            "defined": "AuctionBumps"
           }
         }
       ]
@@ -89,26 +89,6 @@
       "accounts": [
         {
           "name": "userAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "userLpusd",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "lpusdMint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "userLpsol",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "lpsolMint",
           "isMut": true,
           "isSigner": false
         },
@@ -151,7 +131,7 @@
       ]
     },
     {
-      "name": "depositCollateral",
+      "name": "depositLpusd",
       "accounts": [
         {
           "name": "userAuthority",
@@ -159,13 +139,13 @@
           "isSigner": true
         },
         {
-          "name": "userCollateral",
+          "name": "userLpusd",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "collateralMint",
-          "isMut": true,
+          "name": "lpusdMint",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -174,56 +154,7 @@
           "isSigner": false
         },
         {
-          "name": "collateralPool",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "userAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        },
-        {
-          "name": "poolBump",
-          "type": "u8"
-        },
-        {
-          "name": "poolSeed",
-          "type": "string"
-        }
-      ]
-    },
-    {
-      "name": "depositSol",
-      "accounts": [
-        {
-          "name": "userAuthority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "stateAccount",
+          "name": "poolLpusd",
           "isMut": true,
           "isSigner": false
         },
@@ -256,7 +187,7 @@
       ]
     },
     {
-      "name": "borrowLptoken",
+      "name": "liquidate",
       "accounts": [
         {
           "name": "userAuthority",
@@ -264,23 +195,108 @@
           "isSigner": true
         },
         {
-          "name": "userAccount",
+          "name": "auctionAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "stateAccount",
+          "name": "liquidator",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "userCollateral",
+          "name": "cbsAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "collateralMint",
+          "name": "cbsProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "swapProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "swapLpusd",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "swapLpsol",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "swapBtc",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "swapUsdc",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "btcMint",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "usdcMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "lpsolMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "lpusdMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "auctionLpusd",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "auctionLpsol",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "auctionBtc",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "auctionUsdc",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cbsLpusd",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cbsLpsol",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cbsUsdc",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "cbsBtc",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -314,23 +330,24 @@
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "islpusd",
-          "type": "bool"
-        },
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
+      "args": []
     },
     {
-      "name": "liquidateCollateral",
+      "name": "withdrawLpusd",
       "accounts": [
         {
-          "name": "userAccount",
+          "name": "userAuthority",
           "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "userLpusd",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "lpusdMint",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -339,47 +356,12 @@
           "isSigner": false
         },
         {
-          "name": "auctionAccount",
+          "name": "poolLpusd",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "auctionLpusd",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "auctionLpsol",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "auctionBtc",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "auctionUsdc",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "cbsLpusd",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "cbsLpsol",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "cbsBtc",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "cbsUsdc",
+          "name": "userAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -404,12 +386,36 @@
   ],
   "accounts": [
     {
-      "name": "StateAccount",
+      "name": "UserStateAccount",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "protocolName",
+            "name": "lpusdAmount",
+            "type": "u64"
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "discountReward",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AuctionStateAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "auctionName",
             "type": {
               "array": [
                 "u8",
@@ -420,40 +426,12 @@
           {
             "name": "bumps",
             "type": {
-              "defined": "ProtocolBumps"
+              "defined": "AuctionBumps"
             }
           },
           {
             "name": "owner",
             "type": "publicKey"
-          },
-          {
-            "name": "totalBorrowedLpusd",
-            "type": "u64"
-          },
-          {
-            "name": "totalBorrowedLpsol",
-            "type": "u64"
-          },
-          {
-            "name": "totalDepositedSol",
-            "type": "u64"
-          },
-          {
-            "name": "totalDepositedUsdc",
-            "type": "u64"
-          },
-          {
-            "name": "totalDepositedBtc",
-            "type": "u64"
-          },
-          {
-            "name": "totalDepositedLpsol",
-            "type": "u64"
-          },
-          {
-            "name": "totalDepositedLpusd",
-            "type": "u64"
           },
           {
             "name": "lpsolMint",
@@ -488,35 +466,7 @@
             "type": "publicKey"
           },
           {
-            "name": "liquidationRun",
-            "type": "bool"
-          }
-        ]
-      }
-    },
-    {
-      "name": "UserAccount",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "borrowedLpusd",
-            "type": "u64"
-          },
-          {
-            "name": "borrowedLpsol",
-            "type": "u64"
-          },
-          {
-            "name": "btcAmount",
-            "type": "u64"
-          },
-          {
-            "name": "solAmount",
-            "type": "u64"
-          },
-          {
-            "name": "usdcAmount",
+            "name": "lpusdAmount",
             "type": "u64"
           },
           {
@@ -524,16 +474,24 @@
             "type": "u64"
           },
           {
-            "name": "lpusdAmount",
+            "name": "solAmount",
             "type": "u64"
           },
           {
-            "name": "owner",
-            "type": "publicKey"
+            "name": "btcAmount",
+            "type": "u64"
           },
           {
-            "name": "bump",
-            "type": "u8"
+            "name": "usdcAmount",
+            "type": "u64"
+          },
+          {
+            "name": "rewardPercent",
+            "type": "u64"
+          },
+          {
+            "name": "rewardDenominator",
+            "type": "u64"
           }
         ]
       }
@@ -541,20 +499,12 @@
   ],
   "types": [
     {
-      "name": "ProtocolBumps",
+      "name": "AuctionBumps",
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "stateAccount",
-            "type": "u8"
-          },
-          {
-            "name": "lpusdMint",
-            "type": "u8"
-          },
-          {
-            "name": "lpsolMint",
             "type": "u8"
           },
           {
@@ -585,16 +535,13 @@
             "name": "InsufficientAmount"
           },
           {
-            "name": "BorrowFailed"
-          },
-          {
-            "name": "BorrowExceed"
+            "name": "InsufficientPoolAmount"
           }
         ]
       }
     }
   ],
   "metadata": {
-    "address": "3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM"
+    "address": "6KS4ho2CDvr7MGofHU6F6WJfQ5j6DL8nhBWJtkhMTzqt"
   }
 }

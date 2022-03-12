@@ -1,5 +1,7 @@
 import * as anchor from '@project-serum/anchor';
 import idl from '../idls/cbs_protocol.json';
+import auction_idl from '../idls/lpusd_auction.json';
+
 import { CBS_Contants, COMMON_Contants } from '../constants';
 const { PublicKey, Connection } = anchor.web3;
 const { NETWORK } = COMMON_Contants;
@@ -71,6 +73,44 @@ export const readStateAccount = async (provider, stateAccount) => {
         return accountData;
     } catch (err) {
         console.log(err)
+        return null;
+    }
+}
+
+// Auction program state account
+export const readAuctionStateAccount = async (provider, auctionStateAccount) => {
+    try {
+        anchor.setProvider(provider);
+        const programId = new PublicKey(auction_idl.metadata.address);
+
+        const program = new anchor.Program(auction_idl, programId);
+        const accountData = await program.account.auctionStateAccount.fetch(auctionStateAccount);
+        return accountData;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+}
+
+export const readAuctionUserAccount = async (provider, publicKey) => {
+    try {
+        anchor.setProvider(provider);
+
+        // address of deployed program
+        const programId = new PublicKey(auction_idl.metadata.address);
+    
+        // Generate the program client from IDL.
+        const program = new anchor.Program(auction_idl, programId); 
+
+        const [userAccount, bump] = await PublicKey.findProgramAddress(
+            [Buffer.from(cbs_name), Buffer.from(publicKey.toBuffer())],
+            programId
+        );
+
+        const accountData = await program.account.userStateAccount.fetch(userStateAccount);
+        return accountData;
+    } catch (err) {
+        console.log(err);
         return null;
     }
 }

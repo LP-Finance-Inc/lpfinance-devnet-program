@@ -46,7 +46,7 @@ pub mod lpfinance_swap {
             return Err(ErrorCode::InvalidQuoteAmount.into());
         }
 
-        if **ctx.accounts.user_authority.lamports.borrow() < quote_amount {
+        if **ctx.accounts.user_authority.lamports.borrow()  < quote_amount {
             return Err(ErrorCode::InsufficientAmount.into());
         }
 
@@ -55,7 +55,7 @@ pub mod lpfinance_swap {
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
 
         let quote_price = pyth_price.agg.price as u64;
-        let quote_total = quote_price * quote_amount;
+        let quote_total: u128 = quote_price as u128 * quote_amount as u128;
 
         // destination token
         let pyth_price_info = &ctx.accounts.pyth_dest_account;
@@ -64,7 +64,7 @@ pub mod lpfinance_swap {
 
         let dest_price = pyth_price.agg.price as u64;
 
-        let transfer_amount = quote_total/dest_price;
+        let transfer_amount = (quote_total/dest_price as u128) as u64;
 
         if ctx.accounts.dest_pool.amount < transfer_amount {
             return Err(ErrorCode::InsufficientAmount.into());
@@ -130,18 +130,18 @@ pub mod lpfinance_swap {
         let pyth_price_data = &pyth_price_info.try_borrow_data()?;
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
 
-        let quote_price = pyth_price.agg.price as u64;
-        let quote_total = quote_price * quote_amount;
+        let quote_price = pyth_price.agg.price as u128;
+        let quote_total = quote_price * quote_amount as u128;
 
         // destination token
         let pyth_price_info = &ctx.accounts.pyth_dest_account;
         let pyth_price_data = &pyth_price_info.try_borrow_data()?;
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
 
-        let dest_price = pyth_price.agg.price as u64;
+        let dest_price = pyth_price.agg.price as u128;
 
 
-        let transfer_amount = quote_total/dest_price;
+        let transfer_amount = (quote_total/dest_price) as u64;
         let pool_balance = **ctx.accounts.state_account.to_account_info().lamports.borrow();
         msg!("Pool Balance: !!{:?}!!", pool_balance.to_string());
 
@@ -173,17 +173,23 @@ pub mod lpfinance_swap {
         let pyth_price_data = &pyth_price_info.try_borrow_data()?;
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
 
-        let quote_price = pyth_price.agg.price as u64;
-        let quote_total = quote_price * quote_amount;
+        let quote_price = pyth_price.agg.price as u128;
+        let quote_total: u128 = quote_price * quote_amount as u128;
 
         // destination token
         let pyth_price_info = &ctx.accounts.pyth_dest_account;
         let pyth_price_data = &pyth_price_info.try_borrow_data()?;
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
 
-        let dest_price = pyth_price.agg.price as u64;
+        let dest_price = pyth_price.agg.price as u128;
 
-        let transfer_amount = quote_total/dest_price;
+        msg!("Quote Price: !!{:?}!!", quote_price.to_string());
+        msg!("Dest Price: !!{:?}!!", dest_price.to_string());
+        msg!("Quote Amount: !!{:?}!!", quote_amount.to_string());
+
+        let transfer_amount = (quote_total/dest_price) as u64;
+        msg!("Transfer Amount: !!{:?}!!", transfer_amount.to_string());
+        msg!("Quote Total: !!{:?}!!", quote_total.to_string());
 
         let cpi_accounts = Transfer {
             from: ctx.accounts.user_quote.to_account_info(),

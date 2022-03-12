@@ -747,12 +747,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "lpfinance-swap"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "nom",
+ "num-derive",
+ "num-traits",
+ "pyth-client",
+ "solana-program",
+ "spl-token",
+]
+
+[[package]]
 name = "lpusd-auction"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
  "anchor-spl",
  "cbs-protocol",
+ "lpfinance-swap",
  "nom",
  "num-derive",
  "num-traits",

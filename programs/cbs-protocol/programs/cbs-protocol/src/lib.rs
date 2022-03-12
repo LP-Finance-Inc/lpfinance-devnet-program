@@ -9,9 +9,8 @@ declare_id!("3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM");
 
 const LP_TOKEN_DECIMALS: u8 = 9;
 
-const LTV:u64 = 85;
-const DOMINATOR:u64 = 100;
-const DOMINATOR_PRICE:u64 = 1000000;
+const LTV:u128 = 85;
+const DOMINATOR:u128 = 100;
 
 #[program]
 pub mod cbs_protocol {
@@ -154,7 +153,7 @@ pub mod cbs_protocol {
         msg!("Borrow LpToken");
 
         // Borrowable TotalPrice. Need to be calculated with LTV
-        let mut total_price = 0;
+        let mut total_price: u128 = 0;
         let user_account = &mut ctx.accounts.user_account;
         let state_account = &mut ctx.accounts.state_account;
 
@@ -164,34 +163,34 @@ pub mod cbs_protocol {
         // let pyth_price = <pyth_client::Price>::try_from(pyth_price_data);
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
         
-        let btc_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;
-        total_price += btc_price * user_account.btc_amount;
+        let btc_price = pyth_price.agg.price as u128;
+        total_price += btc_price * user_account.btc_amount as u128;
 
         // SOL price
         let pyth_price_info = &ctx.accounts.pyth_sol_account;
         let pyth_price_data = &pyth_price_info.try_borrow_data()?;
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
 
-        let sol_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;
-        total_price += sol_price * user_account.sol_amount;
+        let sol_price = pyth_price.agg.price as u128;
+        total_price += sol_price * user_account.sol_amount as u128;
 
         // USDC price
         let pyth_price_info = &ctx.accounts.pyth_usdc_account;
         let pyth_price_data = &pyth_price_info.try_borrow_data()?;
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
 
-        let usdc_price = pyth_price.agg.price as u64 / DOMINATOR_PRICE;        
-        total_price += usdc_price * user_account.usdc_amount;
+        let usdc_price = pyth_price.agg.price as u128;        
+        total_price += usdc_price * user_account.usdc_amount as u128;
 
         // LpUSD price
         let lpusd_price = usdc_price;        
-        total_price += lpusd_price * user_account.lpusd_amount;
+        total_price += lpusd_price * user_account.lpusd_amount as u128;
 
         // LpSOL price
         let lpsol_price = sol_price;
-        total_price += lpsol_price * user_account.lpsol_amount ;
+        total_price += lpsol_price * user_account.lpsol_amount as u128;
 
-        let mut borrow_value = amount;
+        let mut borrow_value: u128 = amount as u128;
         msg!("Request amount: !!{:?}!!", amount.to_string());
         if islpusd {
             borrow_value = borrow_value * lpusd_price;
@@ -229,60 +228,60 @@ pub mod cbs_protocol {
 
             // LpUSD
             if user_account.lpusd_amount > 0 && borrow_value  > 0 {
-                if lpusd_price * user_account.lpusd_amount >= borrow_value * DOMINATOR / LTV {
-                    user_account.lpusd_amount = user_account.lpusd_amount - borrow_value / lpusd_price * DOMINATOR / LTV;
+                if lpusd_price * user_account.lpusd_amount as u128 >= borrow_value * DOMINATOR / LTV {
+                    user_account.lpusd_amount = user_account.lpusd_amount - (borrow_value / lpusd_price * DOMINATOR / LTV) as u64;
 
                     borrow_value = 0;
                 } else {
-                    borrow_value = borrow_value - lpusd_price * user_account.lpusd_amount * LTV / DOMINATOR;
+                    borrow_value = borrow_value - lpusd_price * user_account.lpusd_amount as u128 * LTV / DOMINATOR;
                     user_account.lpusd_amount = 0;
                 }
             }
 
             // LpSOL
             if user_account.lpsol_amount > 0 && borrow_value  > 0 {
-                if lpsol_price * user_account.lpsol_amount >= borrow_value * DOMINATOR / LTV {
-                    user_account.lpsol_amount = user_account.lpsol_amount - borrow_value / lpsol_price  * DOMINATOR / LTV;
+                if lpsol_price * user_account.lpsol_amount as u128 >= borrow_value * DOMINATOR / LTV {
+                    user_account.lpsol_amount = user_account.lpsol_amount - (borrow_value / lpsol_price  * DOMINATOR / LTV) as u64;
 
                     borrow_value = 0;
                 } else {
-                    borrow_value = borrow_value - lpsol_price * user_account.lpsol_amount * LTV / DOMINATOR;
+                    borrow_value = borrow_value - lpsol_price * user_account.lpsol_amount as u128 * LTV / DOMINATOR;
                     user_account.lpsol_amount = 0;
                 }
             }
 
             // UDSC
             if user_account.usdc_amount > 0 && borrow_value  > 0 {
-                if usdc_price * user_account.usdc_amount >= borrow_value * DOMINATOR / LTV  {
-                    user_account.usdc_amount = user_account.usdc_amount - borrow_value / usdc_price * DOMINATOR / LTV;
+                if usdc_price * user_account.usdc_amount as u128 >= borrow_value * DOMINATOR / LTV  {
+                    user_account.usdc_amount = user_account.usdc_amount - (borrow_value / usdc_price * DOMINATOR / LTV) as u64;
 
                     borrow_value = 0;
                 } else {
-                    borrow_value = borrow_value - usdc_price * user_account.usdc_amount * LTV / DOMINATOR;
+                    borrow_value = borrow_value - usdc_price * user_account.usdc_amount as u128 * LTV / DOMINATOR;
                     user_account.usdc_amount = 0;
                 }
             }
 
             // SOL
             if user_account.sol_amount > 0 && borrow_value  > 0 {
-                if sol_price * user_account.sol_amount >= borrow_value * DOMINATOR / LTV {
-                    user_account.sol_amount = user_account.sol_amount - borrow_value / sol_price * DOMINATOR / LTV;
+                if sol_price * user_account.sol_amount as u128 >= borrow_value * DOMINATOR / LTV {
+                    user_account.sol_amount = user_account.sol_amount - (borrow_value / sol_price * DOMINATOR / LTV) as u64;
 
                     borrow_value = 0;
                 } else {
-                    borrow_value = borrow_value - sol_price * user_account.sol_amount* LTV / DOMINATOR;
+                    borrow_value = borrow_value - sol_price * user_account.sol_amount as u128 * LTV / DOMINATOR;
                     user_account.sol_amount = 0;
                 }
             }
 
             // BTC
             if user_account.btc_amount > 0 && borrow_value  > 0 {
-                if btc_price * user_account.btc_amount >= borrow_value * DOMINATOR / LTV {
-                    user_account.btc_amount = user_account.btc_amount - borrow_value / btc_price * DOMINATOR / LTV;
+                if btc_price * user_account.btc_amount as u128 >= borrow_value * DOMINATOR / LTV {
+                    user_account.btc_amount = user_account.btc_amount - (borrow_value / btc_price * DOMINATOR / LTV) as u64;
 
                     borrow_value = 0;
                 } else {
-                    borrow_value = borrow_value - btc_price * user_account.btc_amount;
+                    borrow_value = borrow_value - btc_price * user_account.btc_amount as u128 * LTV / DOMINATOR;
                     user_account.btc_amount = 0;
                 }
             }
@@ -313,6 +312,13 @@ pub mod cbs_protocol {
         let lpsol_amount = user_account.lpsol_amount;
         let usdc_amount = user_account.usdc_amount;
         let btc_amount = user_account.btc_amount;
+        let sol_amount = user_account.sol_amount;
+
+        let seeds = &[
+            ctx.accounts.state_account.protocol_name.as_ref(),
+            &[ctx.accounts.state_account.bumps.state_account],
+        ];
+        let signer = &[&seeds[..]];
 
         if lpusd_amount > 0 {
             let cpi_accounts = Transfer {
@@ -322,7 +328,7 @@ pub mod cbs_protocol {
             };
     
             let cpi_program = ctx.accounts.token_program.to_account_info();
-            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
             token::transfer(cpi_ctx, lpusd_amount)?;
         }
 
@@ -334,7 +340,7 @@ pub mod cbs_protocol {
             };
     
             let cpi_program = ctx.accounts.token_program.to_account_info();
-            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
             token::transfer(cpi_ctx, lpsol_amount)?;
         }
 
@@ -346,7 +352,7 @@ pub mod cbs_protocol {
             };
     
             let cpi_program = ctx.accounts.token_program.to_account_info();
-            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
             token::transfer(cpi_ctx, btc_amount)?;
         }
 
@@ -358,14 +364,21 @@ pub mod cbs_protocol {
             };
     
             let cpi_program = ctx.accounts.token_program.to_account_info();
-            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
             token::transfer(cpi_ctx, usdc_amount)?;
+        }
+
+        if sol_amount > 0 {
+            **ctx.accounts.state_account.to_account_info().try_borrow_mut_lamports()? -= sol_amount;
+            **ctx.accounts.auction_account.try_borrow_mut_lamports()? += sol_amount;
         }
 
         user_account.lpusd_amount = 0;
         user_account.lpsol_amount = 0;
         user_account.usdc_amount = 0;
         user_account.btc_amount = 0;
+        user_account.sol_amount = 0;
+
         user_account.borrowed_lpusd = 0;
         user_account.borrowed_lpsol = 0;
         
@@ -597,6 +610,8 @@ pub struct LiquidateCollateral<'info> {
     pub user_account: Account<'info, UserAccount>,
     #[account(mut)]
     pub state_account: Account<'info, StateAccount>,
+    #[account(mut)]
+    pub auction_account: AccountInfo<'info>,
     #[account(mut)]
     pub auction_lpusd: Account<'info, TokenAccount>,
     #[account(mut)]

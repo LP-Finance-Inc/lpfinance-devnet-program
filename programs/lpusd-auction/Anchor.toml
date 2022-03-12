@@ -1,11 +1,11 @@
-[programs.localnet]
-lpusd_auction = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+[programs.devnet]
+lpusd_auction = "6KS4ho2CDvr7MGofHU6F6WJfQ5j6DL8nhBWJtkhMTzqt"
 
 [registry]
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "/Users/kk/.config/solana/id.json"
 
 [scripts]

@@ -25,4 +25,4 @@ nom = "7"
 solana-program = "1.6.6"
 pyth-client = "0.2.2"
 cbs-protocol = { path = "../../../cbs-protocol/programs/cbs-protocol", features=["cpi"]}
-lpfinance-swap = { path = "../../../lpfinance-protocol/programs/lpfinance-swap", features=["cpi"]}
+lpfinance-swap = { path = "../../../lpfinance-swap/programs/lpfinance-swap", features=["cpi"]}
