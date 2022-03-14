@@ -4,17 +4,19 @@ const { PublicKey } = anchor.web3;
 export const cbs_name = "cbs_pool03";
 
 export const bumps = {
-    stateAccount: 254,
+    stateAccount: 252,
     lpusdMint: 255,
-    lpsolMint: 254,
-    poolUsdc: 252,
-    poolBtc: 254,
-    poolLpsol: 255,
-    poolLpusd: 253
+    lpsolMint: 252,
+    poolUsdc: 255,
+    poolBtc: 255,
+    poolMsol: 253,
+    poolLpsol: 254,
+    poolLpusd: 254
 }
-export const stateAccount = new PublicKey("6ZitbU1D6EZBYqKHq74zCkzoZBvGDGdgzKH1oUh5RM8j");
-export const poolUsdc = new PublicKey("GpzZjubiozLk9K6obfm1dcnKQSqqZGn69dooX2Q1C3Uk");
-export const poolBtc = new PublicKey("2tDLPfwz7KCtzSBvUZcsuwmDSZBvy7nT7JEYfQTWApzn");
-export const poolLpsol = new PublicKey("8sB3gqYZ13J4hTmhQ6P5XRcHvoviwymU8Ru9dE2MUrcB");
-export const poolLpusd = new PublicKey("GXHTqCiQuFc6k5UT8Rc4aS1gVTr45sTP1NjhQMMtSK82");
+export const stateAccount = new PublicKey("2bpEcaTSRtenzbtVuQmygXWn69ccj2voJ59PjbPuthtJ");
+export const poolUsdc = new PublicKey("6KJ8uDFnEjPo3VvLoNHhpNq17E3JB9iVzUPFNwUMRzGq");
+export const poolBtc = new PublicKey("t8ehVs5jAqYVwfLs2F4goQ7jqprAkcZpJDax8LQAcS6");
+export const poolLpsol = new PublicKey("GoT7kwnXsmxYCMAz8Cp9zCqx9XkEaYwksxKTDv1WoGHZ");
+export const poolLpusd = new PublicKey("DjzPeokasEPme9V19861Y5oNgjaxFHHFDz9k6RjvAHBG");
+export const poolMsol = new PublicKey("7cgwUfB5cHFGPDH2ojkYWP4eZcoBzsvzG2tmRtXz1dU3");
 
