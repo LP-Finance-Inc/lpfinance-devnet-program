@@ -105,7 +105,7 @@ export const BorrowComponent = () => {
             // Get info from user's state account
             const provider = await getProvider();
             const accountData = await readUserAccount(provider, publicKey);
-            console.log("Account Data:", accountData);
+            console.log("Account Data:", accountData, accountData.solAmount.toString());
             console.log("Borrowed LpSOL:", convert_from_wei(accountData.borrowedLpsol.toString()));
             console.log("Borrowed LpUSD:", convert_from_wei(accountData.borrowedLpusd.toString()));
 

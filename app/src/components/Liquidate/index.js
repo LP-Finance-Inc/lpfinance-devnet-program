@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import * as anchor from '@project-serum/anchor';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token'
-import idl from '../../idls/lpfinance_swap.json';
-import { CBS_Contants, Auction_Constants, COMMON_Contants } from '../../constants';
+import idl from '../../idls/lpusd_auction.json';
+import cbs_idl from '../../idls/cbs_protocol.json';
+import swap_idl  from '../../idls/lpfinance_swap.json';
+
+import { CBS_Contants, SWAP_Contants, Auction_Constants, COMMON_Contants } from '../../constants';
 import {
     convert_from_wei,
     convert_to_wei,
@@ -41,16 +44,17 @@ export const Liqudate = () => {
             // Get info from user's state account
             const provider = await getProvider();
             const accountData = await readAuctionUserAccount(provider, publicKey);
+            if (!accountData) return;
             console.log("Account Data:", accountData);
-            console.log("Deposited LpSOL:", convert_from_wei(accountData.lpusd_amount.toString()));
-            console.log("Discount Reward:", convert_from_wei(accountData.discount_reward.toString()));
+            console.log("Deposited LpSOL:", convert_from_wei(accountData.lpusdAmount.toString()));
+            console.log("Discount Reward:", convert_from_wei(accountData.discountReward.toString()));
 
             // Get info from cbs program's state account
             const programData = await readAuctionStateAccount(provider, stateAccount);
             console.log("Program Data:", programData);
 
-            console.log("Reward Percent:", convert_from_wei(programData.reward_percent.toString()));
-            console.log("Total deposited LpUSD:", convert_from_wei(programData.lpusd_amount.toString()));
+            console.log("Reward Percent:", programData.rewardPercent.toString());
+            console.log("Auction Total deposited LpUSD:", convert_from_wei(programData.lpusdAmount.toString()));
         } catch (err) {
             console.log(err);
         }
@@ -137,7 +141,7 @@ export const Liqudate = () => {
                 const deposit_amount = new anchor.BN(deposit_wei); // '100000000'
                 console.log("Deposit Amount:", deposit_amount.toString())
 
-                await program.rpc.deposit_lpusd(
+                await program.rpc.depositLpusd(
                     deposit_amount, {
                     accounts: {
                         userAuthority,
@@ -163,6 +167,84 @@ export const Liqudate = () => {
         console.log("End transaction")
     }
     
+    const liquidate = async () => {
+        try {
+            const auctionLpusd = poolLpusd;
+            const auctionLpsol = poolLpsol;
+            const auctionBtc = poolBtc;
+            const auctionUsdc = poolUsdc;
+
+            const cbsLpusd = CBS_Contants.poolLpusd;
+            const cbsLpsol = CBS_Contants.poolLpsol;
+            const cbsUsdc = CBS_Contants.poolUsdc;
+            const cbsBtc = CBS_Contants.poolBtc;
+
+            const swapLpusd = SWAP_Contants.poolLpusd;
+            const swapLpsol = SWAP_Contants.poolLpsol;
+            const swapBtc = SWAP_Contants.poolBtc;
+            const swapUsdc = SWAP_Contants.poolUsdc;
+
+            const cbsAccount = CBS_Contants.stateAccount;
+            const cbsProgram = new PublicKey(cbs_idl.metadata.address);
+            const swapProgram = new PublicKey(swap_idl.metadata.address);
+            const auctionAccount = stateAccount;
+
+            const userAuthority = wallet.publicKey;
+            const provider = await getProvider();
+            anchor.setProvider(provider);
+            // address of deployed program
+            const programId = new PublicKey(cbs_idl.metadata.address);    
+            // Generate the program client from cbs_idl.
+            const program = new anchor.Program(cbs_idl, programId);
+            
+            const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
+                [Buffer.from(CBS_Contants.cbs_name), Buffer.from(userAuthority.toBuffer())],
+                program.programId
+            );
+            const liquidator = userAccount;
+            
+            const auctionProgramId = new PublicKey(idl.metadata.address);
+            const auctionProgram = new anchor.Program(idl, auctionProgramId);
+
+            await auctionProgram.rpc.liquidate({
+                accounts: {
+                    userAuthority,
+                    auctionAccount,
+                    liquidator,
+                    cbsAccount,
+                    cbsProgram,
+                    swapProgram,
+                    swapLpusd,
+                    swapLpsol,
+                    swapBtc,
+                    swapUsdc,
+                    btcMint,
+                    usdcMint,
+                    lpsolMint,
+                    lpusdMint,
+                    auctionLpusd,
+                    auctionLpsol,
+                    auctionBtc,
+                    auctionUsdc,
+                    cbsLpusd,
+                    cbsLpsol,
+                    cbsUsdc,
+                    cbsBtc,
+                    pythBtcAccount,
+                    pythUsdcAccount,
+                    pythSolAccount,
+                    systemProgram: SystemProgram.programId,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    rent: SYSVAR_RENT_PUBKEY
+                }
+            })
+            await getInfo(); 
+
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
     return (
         <div>  
             <h2>4) Liqudate</h2>
@@ -173,6 +255,9 @@ export const Liqudate = () => {
             <div>
                 <button onClick={ deposite_lpusd } >
                     Deposit LpUSD
+                </button>
+                <button onClick={ liquidate } >
+                    Liquidate
                 </button>
             </div>
             <hr/>
