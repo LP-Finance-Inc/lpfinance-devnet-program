@@ -26,12 +26,22 @@
           "isSigner": false
         },
         {
+          "name": "msolMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "poolUsdc",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "poolBtc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolMsol",
           "isMut": true,
           "isSigner": false
         },
@@ -299,6 +309,11 @@
           "isSigner": false
         },
         {
+          "name": "pythMsolAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -456,6 +471,10 @@
             "type": "u64"
           },
           {
+            "name": "totalDepositedMsol",
+            "type": "u64"
+          },
+          {
             "name": "lpsolMint",
             "type": "publicKey"
           },
@@ -472,6 +491,10 @@
             "type": "publicKey"
           },
           {
+            "name": "msolMint",
+            "type": "publicKey"
+          },
+          {
             "name": "poolBtc",
             "type": "publicKey"
           },
@@ -485,6 +508,10 @@
           },
           {
             "name": "poolLpusd",
+            "type": "publicKey"
+          },
+          {
+            "name": "poolMsol",
             "type": "publicKey"
           },
           {
@@ -525,6 +552,10 @@
           },
           {
             "name": "lpusdAmount",
+            "type": "u64"
+          },
+          {
+            "name": "msolAmount",
             "type": "u64"
           },
           {
@@ -572,6 +603,10 @@
           {
             "name": "poolLpsol",
             "type": "u8"
+          },
+          {
+            "name": "poolMsol",
+            "type": "u8"
           }
         ]
       }
@@ -589,6 +624,9 @@
           },
           {
             "name": "BorrowExceed"
+          },
+          {
+            "name": "InvalidAmount"
           }
         ]
       }

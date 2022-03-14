@@ -34,8 +34,10 @@ pub mod cbs_protocol {
         state_account.usdc_mint = ctx.accounts.usdc_mint.key();
         state_account.lpusd_mint = ctx.accounts.lpusd_mint.key();
         state_account.lpsol_mint = ctx.accounts.lpsol_mint.key();
+        state_account.msol_mint = ctx.accounts.msol_mint.key();
         state_account.pool_btc = ctx.accounts.pool_btc.key();
         state_account.pool_usdc = ctx.accounts.pool_usdc.key();
+        state_account.pool_msol = ctx.accounts.pool_msol.key();
         state_account.pool_lpsol = ctx.accounts.pool_lpsol.key();
         state_account.pool_lpusd = ctx.accounts.pool_lpusd.key();
         state_account.owner = ctx.accounts.authority.key();
@@ -48,6 +50,7 @@ pub mod cbs_protocol {
         state_account.total_deposited_btc = 0;
         state_account.total_deposited_lpsol = 0;
         state_account.total_deposited_lpusd = 0;
+        state_account.total_deposited_msol = 0;
 
         state_account.liquidation_run = false;
 
@@ -110,6 +113,10 @@ pub mod cbs_protocol {
             state_account.total_deposited_lpsol = state_account.total_deposited_lpsol + amount;
         }
 
+        if ctx.accounts.user_collateral.mint == state_account.msol_mint {
+            user_account.msol_amount = user_account.msol_amount + amount;
+            state_account.total_deposited_msol = state_account.total_deposited_msol + amount;
+        }
         Ok(())
     }
 
@@ -152,8 +159,12 @@ pub mod cbs_protocol {
     ) -> Result<()> {
         msg!("Borrow LpToken");
 
+        if amount < 1 {
+            return Err(ErrorCode::InvalidAmount.into());
+        }
         // Borrowable TotalPrice. Need to be calculated with LTV
         let mut total_price: u128 = 0;
+        let mut total_borrowed_price: u128 = 0;
         let user_account = &mut ctx.accounts.user_account;
         let state_account = &mut ctx.accounts.state_account;
 
@@ -182,6 +193,14 @@ pub mod cbs_protocol {
         let usdc_price = pyth_price.agg.price as u128;        
         total_price += usdc_price * user_account.usdc_amount as u128;
 
+        // mSOL price
+        let pyth_price_info = &ctx.accounts.pyth_msol_account;
+        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+        let msol_price = pyth_price.agg.price as u128;        
+        total_price += msol_price * user_account.msol_amount as u128;
+
         // LpUSD price
         let lpusd_price = usdc_price;        
         total_price += lpusd_price * user_account.lpusd_amount as u128;
@@ -189,6 +208,9 @@ pub mod cbs_protocol {
         // LpSOL price
         let lpsol_price = sol_price;
         total_price += lpsol_price * user_account.lpsol_amount as u128;
+        // Total Borrowed AMount
+        total_borrowed_price += lpusd_price * user_account.borrowed_lpusd as u128;
+        total_borrowed_price += lpsol_price * user_account.borrowed_lpsol as u128;
 
         let mut borrow_value: u128 = amount as u128;
         msg!("Request amount: !!{:?}!!", amount.to_string());
@@ -206,8 +228,9 @@ pub mod cbs_protocol {
 
         msg!("Borrow Value: !!{:?}!!", borrow_value.to_string());
         msg!("Total Value: !!{:?}!!", total_price.to_string());
-        let borrable_total = total_price * LTV / DOMINATOR;
+        let borrable_total = total_price * LTV / DOMINATOR - total_borrowed_price;
         msg!("Borrowable Total Value: !!{:?}!!", borrable_total.to_string());
+
         if borrable_total > borrow_value {
             // Mint
             let seeds = &[
@@ -226,78 +249,13 @@ pub mod cbs_protocol {
 
             token::mint_to(cpi_ctx, amount)?;
 
-            // LpUSD
-            if user_account.lpusd_amount > 0 && borrow_value  > 0 {
-                if lpusd_price * user_account.lpusd_amount as u128 >= borrow_value * DOMINATOR / LTV {
-                    user_account.lpusd_amount = user_account.lpusd_amount - (borrow_value / lpusd_price * DOMINATOR / LTV) as u64;
-
-                    borrow_value = 0;
-                } else {
-                    borrow_value = borrow_value - lpusd_price * user_account.lpusd_amount as u128 * LTV / DOMINATOR;
-                    user_account.lpusd_amount = 0;
-                }
-            }
-
-            // LpSOL
-            if user_account.lpsol_amount > 0 && borrow_value  > 0 {
-                if lpsol_price * user_account.lpsol_amount as u128 >= borrow_value * DOMINATOR / LTV {
-                    user_account.lpsol_amount = user_account.lpsol_amount - (borrow_value / lpsol_price  * DOMINATOR / LTV) as u64;
-
-                    borrow_value = 0;
-                } else {
-                    borrow_value = borrow_value - lpsol_price * user_account.lpsol_amount as u128 * LTV / DOMINATOR;
-                    user_account.lpsol_amount = 0;
-                }
-            }
-
-            // UDSC
-            if user_account.usdc_amount > 0 && borrow_value  > 0 {
-                if usdc_price * user_account.usdc_amount as u128 >= borrow_value * DOMINATOR / LTV  {
-                    user_account.usdc_amount = user_account.usdc_amount - (borrow_value / usdc_price * DOMINATOR / LTV) as u64;
-
-                    borrow_value = 0;
-                } else {
-                    borrow_value = borrow_value - usdc_price * user_account.usdc_amount as u128 * LTV / DOMINATOR;
-                    user_account.usdc_amount = 0;
-                }
-            }
-
-            // SOL
-            if user_account.sol_amount > 0 && borrow_value  > 0 {
-                if sol_price * user_account.sol_amount as u128 >= borrow_value * DOMINATOR / LTV {
-                    user_account.sol_amount = user_account.sol_amount - (borrow_value / sol_price * DOMINATOR / LTV) as u64;
-
-                    borrow_value = 0;
-                } else {
-                    borrow_value = borrow_value - sol_price * user_account.sol_amount as u128 * LTV / DOMINATOR;
-                    user_account.sol_amount = 0;
-                }
-            }
-
-            // BTC
-            if user_account.btc_amount > 0 && borrow_value  > 0 {
-                if btc_price * user_account.btc_amount as u128 >= borrow_value * DOMINATOR / LTV {
-                    user_account.btc_amount = user_account.btc_amount - (borrow_value / btc_price * DOMINATOR / LTV) as u64;
-
-                    borrow_value = 0;
-                } else {
-                    borrow_value = borrow_value - btc_price * user_account.btc_amount as u128 * LTV / DOMINATOR;
-                    user_account.btc_amount = 0;
-                }
+            if islpusd {
+                user_account.borrowed_lpusd = user_account.borrowed_lpusd + amount;
+            } else {
+                user_account.borrowed_lpsol = user_account.borrowed_lpsol + amount;
             }
         } else {
             return Err(ErrorCode::BorrowExceed.into());
-        }
-
-        msg!("LeftCash: !!{:?}!!", borrow_value.to_string());
-        if borrow_value > 0 {
-            return Err(ErrorCode::BorrowFailed.into());
-        }
-
-        if islpusd {
-            user_account.borrowed_lpusd = user_account.borrowed_lpusd + amount;
-        } else {
-            user_account.borrowed_lpsol = user_account.borrowed_lpsol + amount;
         }
 
         Ok(())
@@ -402,6 +360,7 @@ pub struct Initialize<'info> {
     
     pub usdc_mint: Box<Account<'info, Mint>>,
     pub btc_mint: Box<Account<'info, Mint>>,
+    pub msol_mint: Box<Account<'info, Mint>>,
     // USDC POOL
     #[account(
         init,
@@ -411,7 +370,7 @@ pub struct Initialize<'info> {
         bump,
         payer = authority
     )]
-    pub pool_usdc: Account<'info, TokenAccount>,
+    pub pool_usdc: Box<Account<'info, TokenAccount>>,
     // BTC POOL
     #[account(
         init,
@@ -421,7 +380,18 @@ pub struct Initialize<'info> {
         bump,
         payer = authority
     )]
-    pub pool_btc: Account<'info, TokenAccount>,
+    pub pool_btc: Box<Account<'info, TokenAccount>>,
+    // mSOL POOL
+    #[account(
+        init,
+        token::mint = msol_mint,
+        token::authority = state_account,
+        seeds = [protocol_name.as_bytes(), b"pool_msol".as_ref()],
+        bump,
+        payer = authority
+    )]
+    pub pool_msol: Box<Account<'info, TokenAccount>>,
+
     #[account(init,
         mint::decimals = LP_TOKEN_DECIMALS,
         mint::authority = state_account,
@@ -430,6 +400,7 @@ pub struct Initialize<'info> {
         payer = authority
     )]
     pub lpsol_mint: Box<Account<'info, Mint>>,
+    
 
     #[account(init,
         mint::decimals = LP_TOKEN_DECIMALS,
@@ -448,7 +419,7 @@ pub struct Initialize<'info> {
         bump,
         payer = authority
     )]
-    pub pool_lpsol: Account<'info, TokenAccount>,
+    pub pool_lpsol: Box<Account<'info, TokenAccount>>,
     // LpUSDC POOL
     #[account(
         init,
@@ -458,7 +429,7 @@ pub struct Initialize<'info> {
         bump,
         payer = authority
     )]
-    pub pool_lpusd: Account<'info, TokenAccount>,
+    pub pool_lpusd: Box<Account<'info, TokenAccount>>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>
@@ -548,6 +519,7 @@ pub struct BorrowLpToken<'info> {
     pub pyth_btc_account: AccountInfo<'info>,
     pub pyth_usdc_account: AccountInfo<'info>,
     pub pyth_sol_account: AccountInfo<'info>,
+    pub pyth_msol_account: AccountInfo<'info>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -637,14 +609,17 @@ pub struct StateAccount {
     pub total_deposited_btc: u64,
     pub total_deposited_lpsol: u64,
     pub total_deposited_lpusd: u64,
+    pub total_deposited_msol: u64,
     pub lpsol_mint: Pubkey,
     pub lpusd_mint: Pubkey,
     pub btc_mint: Pubkey,
     pub usdc_mint: Pubkey,
+    pub msol_mint: Pubkey,
     pub pool_btc: Pubkey,
     pub pool_usdc: Pubkey,
     pub pool_lpsol: Pubkey,
     pub pool_lpusd: Pubkey,
+    pub pool_msol: Pubkey,
     pub liquidation_run: bool
 }
 
@@ -658,6 +633,7 @@ pub struct UserAccount {
     pub usdc_amount: u64,
     pub lpsol_amount: u64,
     pub lpusd_amount: u64,
+    pub msol_amount: u64,
     pub owner: Pubkey,
     pub bump: u8
 }
@@ -671,6 +647,7 @@ pub struct ProtocolBumps{
     pub pool_btc: u8,
     pub pool_lpusd: u8,
     pub pool_lpsol: u8,
+    pub pool_msol: u8,
 }
 
 #[error_code]
@@ -680,5 +657,7 @@ pub enum ErrorCode {
     #[msg("Borrow Failed")]
     BorrowFailed,
     #[msg("Borrow Exceed")]
-    BorrowExceed
+    BorrowExceed,
+    #[msg("Invalid Amount")]
+    InvalidAmount
 }

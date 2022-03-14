@@ -44,7 +44,7 @@ pub mod faucet {
         if ctx.accounts.token_mint.to_account_info().key() == ctx.accounts.state_account.tbtc_mint {
             transfer_amount = ctx.accounts.state_account.tbtc_amount;
         } else if ctx.accounts.token_mint.to_account_info().key() == ctx.accounts.state_account.tusdc_mint {
-            transfer_amount = ctx.accounts.state_account.tbtc_amount;
+            transfer_amount = ctx.accounts.state_account.tusdc_amount;
         } else if ctx.accounts.token_mint.to_account_info().key() == ctx.accounts.state_account.tmsol_mint {
             transfer_amount = ctx.accounts.state_account.tmsol_amount;
         } else {

@@ -10,17 +10,19 @@ const idl = require("../target/idl/cbs_protocol.json");
 const programID = idl.metadata.address;
 
 console.log("ProgramID", programID);
-const protocol_name = "cbs_pool03";
+const protocol_name = "cbs_pool05";
 const pool_usdc = "pool_usdc";
 const pool_btc = "pool_btc";
 const pool_lpsol = "pool_lpsol";
 const pool_lpusd = "pool_lpusd";
+const pool_msol = "pool_msol";
 const lpsol_mint = "lpsol_mint";
 const lpusd_mint = "lpusd_mint";
 
 // Test Token's MINT
 const usdcMint = new PublicKey("2Q1WAAgnpEox5Y4b6Y8YyXVwFNhDdGot467XfvdBJaPf"); 
 const btcMint = new PublicKey("Hv96pk4HkhGcbNxkBvb7evTU88KzedvgVy2oddBB1ySB");
+const msolMint = new PublicKey("EJ94TwhddyUAra7i3qttQ64Q1wExJYb8GmACbHbAnvKF");
 
 module.exports = async function (provider) {
   // Configure client to use the provider.
@@ -37,6 +39,7 @@ module.exports = async function (provider) {
       lpsolMint: 0,
       poolUsdc: 0,
       poolBtc: 0,
+      poolMsol: 0,
       poolLpsol: 0,
       poolLpusd: 0
     };
@@ -64,6 +67,14 @@ module.exports = async function (provider) {
     );
     bumps.poolBtc = poolBtcBump;
     console.log("Pool-BTC:", poolBtc.toBase58());
+
+    // Find PDA for `btc pool`
+    const [poolMsol, poolMsolBump] = await PublicKey.findProgramAddress(
+      [Buffer.from(protocol_name), Buffer.from(pool_msol)],
+      program.programId
+    );
+    bumps.poolMsol = poolMsolBump;
+    console.log("Pool-MSOL:", poolMsol.toBase58());
 
     // Find PDA for `lpsol pool`
     const [poolLpsol, poolLpsolBump] = await PublicKey.findProgramAddress(
@@ -109,8 +120,10 @@ module.exports = async function (provider) {
         stateAccount,
         usdcMint,
         btcMint,
+        msolMint,
         poolUsdc,
         poolBtc,
+        poolMsol,
         lpsolMint,
         lpusdMint,
         poolLpsol,
@@ -125,6 +138,26 @@ module.exports = async function (provider) {
     console.log("Transaction error: ", err);
   }
 }
+// 2022-03-14 devnet
+// ProgramID 3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM
+// State-Account: 2bpEcaTSRtenzbtVuQmygXWn69ccj2voJ59PjbPuthtJ
+// Pool-USDC: 6KJ8uDFnEjPo3VvLoNHhpNq17E3JB9iVzUPFNwUMRzGq
+// Pool-BTC: t8ehVs5jAqYVwfLs2F4goQ7jqprAkcZpJDax8LQAcS6
+// Pool-MSOL: 7cgwUfB5cHFGPDH2ojkYWP4eZcoBzsvzG2tmRtXz1dU3
+// Pool-LpSOL: GoT7kwnXsmxYCMAz8Cp9zCqx9XkEaYwksxKTDv1WoGHZ
+// Pool-LpUSD: DjzPeokasEPme9V19861Y5oNgjaxFHHFDz9k6RjvAHBG
+// LpSOL-Mint: BseXpATR4hqy7UHvyNztLK711mYPHNCsS5AcBzWzSq7X
+// LpUSD-Mint: GPNCGAjyhA1qcSgSotQvJsM1xcGnDMgtTr9TJ1HVVQgG
+// Bumps {
+//   stateAccount: 252,
+//   lpusdMint: 255,
+//   lpsolMint: 252,
+//   poolUsdc: 255,
+//   poolBtc: 255,
+//   poolMsol: 253,
+//   poolLpsol: 254,
+//   poolLpusd: 254
+// }
 
 // 2022-03-09 devnet
 // ProgramID 3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM
