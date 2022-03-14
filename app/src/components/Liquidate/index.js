@@ -15,12 +15,12 @@ import {
 } from '../../helpers';
 
 const {
-    lpsolMint, lpusdMint, usdcMint, btcMint, pythBtcAccount, 
+    lpsolMint, lpusdMint, usdcMint, btcMint, pythBtcAccount, msolMint, pythMsolAccount,
     pythUsdcAccount, pythSolAccount, NETWORK
 } = COMMON_Contants;
 
 const {
-    poolUsdc, poolBtc, poolLpsol, poolLpusd, auction_name, bumps, stateAccount
+    poolUsdc, poolMsol, poolBtc, poolLpsol, poolLpusd, auction_name, bumps, stateAccount
 } = Auction_Constants;
 
 const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;

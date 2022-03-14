@@ -26,6 +26,11 @@
           "isSigner": false
         },
         {
+          "name": "msolMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "lpusdMint",
           "isMut": false,
           "isSigner": false
@@ -52,6 +57,11 @@
         },
         {
           "name": "poolLpsol",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolMsol",
           "isMut": true,
           "isSigner": false
         },
@@ -109,11 +119,6 @@
         },
         {
           "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -442,6 +447,10 @@
             "type": "publicKey"
           },
           {
+            "name": "msolMint",
+            "type": "publicKey"
+          },
+          {
             "name": "btcMint",
             "type": "publicKey"
           },
@@ -466,6 +475,10 @@
             "type": "publicKey"
           },
           {
+            "name": "poolMsol",
+            "type": "publicKey"
+          },
+          {
             "name": "lpusdAmount",
             "type": "u64"
           },
@@ -483,6 +496,10 @@
           },
           {
             "name": "usdcAmount",
+            "type": "u64"
+          },
+          {
+            "name": "msolAmount",
             "type": "u64"
           },
           {
@@ -522,6 +539,10 @@
           {
             "name": "poolLpsol",
             "type": "u8"
+          },
+          {
+            "name": "poolMsol",
+            "type": "u8"
           }
         ]
       }
@@ -536,6 +557,9 @@
           },
           {
             "name": "InsufficientPoolAmount"
+          },
+          {
+            "name": "InvalidAmount"
           }
         ]
       }

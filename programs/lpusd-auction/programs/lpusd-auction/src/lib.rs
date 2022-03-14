@@ -1,9 +1,6 @@
 use anchor_lang::prelude::*;
 // use pyth_client;
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token::{self, Mint, Transfer, Token, TokenAccount }
-};
+use anchor_spl::token::{self, Mint, Transfer, Token, TokenAccount };
 
 use cbs_protocol::cpi::accounts::LiquidateCollateral;
 use cbs_protocol::program::CbsProtocol;
@@ -41,16 +38,19 @@ pub mod lpusd_auction {
         state_account.usdc_mint = ctx.accounts.usdc_mint.key();
         state_account.lpusd_mint = ctx.accounts.lpusd_mint.key();
         state_account.lpsol_mint = ctx.accounts.lpsol_mint.key();
+        state_account.msol_mint = ctx.accounts.msol_mint.key();
         state_account.pool_btc = ctx.accounts.pool_btc.key();
         state_account.pool_usdc = ctx.accounts.pool_usdc.key();
         state_account.pool_lpsol = ctx.accounts.pool_lpsol.key();
         state_account.pool_lpusd = ctx.accounts.pool_lpusd.key();
+        state_account.pool_msol = ctx.accounts.pool_msol.key();
 
         state_account.lpusd_amount = 0;
         state_account.lpsol_amount = 0;
         state_account.sol_amount = 0;
         state_account.btc_amount = 0;
         state_account.usdc_amount = 0;
+        state_account.msol_amount = 0;
         state_account.reward_percent = 100;
 
         state_account.owner = ctx.accounts.authority.key();
@@ -79,7 +79,9 @@ pub mod lpusd_auction {
         amount: u64
     ) -> Result<()> {
         msg!("UserLpUSD Balance: !!{:?}!!", ctx.accounts.user_lpusd.amount);
-
+        if amount < 1 {
+            return Err(ErrorCode::InvalidAmount.into());
+        }
         if ctx.accounts.user_lpusd.amount < amount {
             return Err(ErrorCode::InsufficientAmount.into());
         }
@@ -395,6 +397,7 @@ pub struct Initialize <'info>{
     pub state_account: Box<Account<'info, AuctionStateAccount>>,
     pub usdc_mint: Box<Account<'info, Mint>>,
     pub btc_mint: Box<Account<'info, Mint>>,
+    pub msol_mint: Box<Account<'info, Mint>>,
     pub lpusd_mint: Box<Account<'info,Mint>>,
     pub lpsol_mint: Box<Account<'info,Mint>>,
     // USDC POOL
@@ -406,7 +409,7 @@ pub struct Initialize <'info>{
         bump,
         payer = authority
     )]
-    pub pool_usdc: Account<'info, TokenAccount>,
+    pub pool_usdc: Box<Account<'info, TokenAccount>>,
     // BTC POOL
     #[account(
         init,
@@ -416,7 +419,7 @@ pub struct Initialize <'info>{
         bump,
         payer = authority
     )]
-    pub pool_btc: Account<'info, TokenAccount>,
+    pub pool_btc: Box<Account<'info, TokenAccount>>,
     // LpUSD POOL
     #[account(
         init,
@@ -426,7 +429,7 @@ pub struct Initialize <'info>{
         bump,
         payer = authority
     )]
-    pub pool_lpusd: Account<'info, TokenAccount>,
+    pub pool_lpusd: Box<Account<'info, TokenAccount>>,
     // LpSOL POOL
     #[account(
         init,
@@ -436,7 +439,17 @@ pub struct Initialize <'info>{
         bump,
         payer = authority
     )]
-    pub pool_lpsol: Account<'info, TokenAccount>,
+    pub pool_lpsol: Box<Account<'info, TokenAccount>>,
+    // mSOL POOL
+    #[account(
+        init,
+        token::mint = msol_mint,
+        token::authority = state_account,
+        seeds = [auction_name.as_bytes(), b"pool_msol".as_ref()],
+        bump,
+        payer = authority
+    )]
+    pub pool_msol: Box<Account<'info, TokenAccount>>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>
@@ -460,7 +473,6 @@ pub struct InitUserAccount<'info> {
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
     pub rent: Sysvar<'info, Rent>,
 }
 
@@ -592,6 +604,7 @@ pub struct AuctionBumps{
     pub pool_btc: u8,
     pub pool_lpusd: u8,
     pub pool_lpsol: u8,
+    pub pool_msol: u8,
 }
 
 #[account]
@@ -602,17 +615,20 @@ pub struct AuctionStateAccount {
     pub owner: Pubkey,
     pub lpsol_mint: Pubkey,
     pub lpusd_mint: Pubkey,
+    pub msol_mint: Pubkey,
     pub btc_mint: Pubkey,
     pub usdc_mint: Pubkey,
     pub pool_btc: Pubkey,
     pub pool_usdc: Pubkey,
     pub pool_lpsol: Pubkey,
     pub pool_lpusd: Pubkey,
+    pub pool_msol: Pubkey,
     pub lpusd_amount: u64,
     pub lpsol_amount: u64,
     pub sol_amount: u64,
     pub btc_amount: u64,
     pub usdc_amount: u64,
+    pub msol_amount: u64,
     pub reward_percent: u64,
     pub reward_denominator: u64
 }
@@ -622,5 +638,7 @@ pub enum ErrorCode {
     #[msg("Insufficient User's Amount")]
     InsufficientAmount,
     #[msg("Insufficient Pool's Amount")]
-    InsufficientPoolAmount
+    InsufficientPoolAmount,
+    #[msg("Invalid Amount")]
+    InvalidAmount
 }
