@@ -34,6 +34,17 @@ pub mod faucet {
         ctx: Context<RequestToken>,
         is_tusdc: bool
     ) -> Result<()> {
+        let transfer_amount;
+
+        if is_tusdc {
+            transfer_amount = 100000000000;
+        } else {
+            transfer_amount = 100000000;
+        }
+
+        if ctx.accounts.pool_token.amount < transfer_amount {
+            return Err(ErrorCode::InsufficientPoolAmount.into());
+        }
         let seeds = &[
             ctx.accounts.state_account.faucet_name.as_ref(),
             &[ctx.accounts.state_account.bumps.state_account],
@@ -48,11 +59,7 @@ pub mod faucet {
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
 
-        if is_tusdc {
-            token::transfer(cpi_ctx, 100000000000)?;
-        } else {
-            token::transfer(cpi_ctx, 100000000)?;
-        }
+        token::transfer(cpi_ctx, transfer_amount)?;
 
         Ok(())
     }
