@@ -166,6 +166,93 @@ export const Liqudate = () => {
 
         console.log("End transaction")
     }
+
+    const withdraw_lpusd = async () => {
+        console.log("Start withdraw")
+
+        const userAuthority = wallet.publicKey;
+        const provider = await getProvider();
+        anchor.setProvider(provider);
+        // address of deployed program
+        const programId = new PublicKey(idl.metadata.address);    
+        // Generate the program client from IDL.
+        const program = new anchor.Program(idl, programId);
+        
+        const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
+            [Buffer.from(auction_name), Buffer.from(userAuthority.toBuffer())],
+            program.programId
+        );
+   
+        let accountData;
+        try {
+            accountData = await program.account.userStateAccount.fetch(userAccount);
+        } catch (err) {
+            accountData = null;
+        }
+
+        if (accountData == null || accountData == undefined) {
+            try {
+                await program.rpc.initUserAccount(userAccountBump, {
+                    accounts: {
+                        userAccount,
+                        stateAccount,
+                        userAuthority,
+                        systemProgram: SystemProgram.programId,
+                        tokenProgram: TOKEN_PROGRAM_ID,
+                        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+                        rent: SYSVAR_RENT_PUBKEY
+                    }
+                });
+                accountData = await program.account.userStateAccount.fetch(userAccount);
+            } catch (err) {
+                console.log(err);
+            }
+        }
+
+        console.log("Passed", accountData)
+        if (accountData == null || accountData == undefined) {
+            return;
+        }
+
+        const userLpusd = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            lpusdMint,
+            userAuthority
+        )
+        
+        if(accountData && accountData.owner.toBase58() == userAuthority.toBase58()) {
+            console.log("Transaction")
+            try {
+                const deposit_wei = convert_to_wei(depositAmount);
+                const deposit_amount = new anchor.BN(deposit_wei); // '100000000'
+                console.log("Deposit Amount:", deposit_amount.toString())
+
+                await program.rpc.depositLpusd(
+                    deposit_amount, {
+                    accounts: {
+                        userAuthority,
+                        userLpusd,
+                        lpusdMint,
+                        stateAccount,
+                        poolLpusd,
+                        userAccount,
+                        systemProgram: SystemProgram.programId,
+                        tokenProgram: TOKEN_PROGRAM_ID,
+                        rent: SYSVAR_RENT_PUBKEY
+                    }
+                })
+                await getInfo();
+            } catch (err) {
+                console.log(err);
+            }
+            console.log("End transaction")
+        } else {
+            alert("Owner account does not match");
+        } 
+
+        console.log("End transaction")
+    }
     
     const liquidate = async () => {
         try {
@@ -256,9 +343,12 @@ export const Liqudate = () => {
                 <button onClick={ deposite_lpusd } >
                     Deposit LpUSD
                 </button>
-                <button onClick={ liquidate } >
-                    Liquidate
+                <button onClick={ withdraw_lpusd } >
+                    Withdraw
                 </button>
+                {/* <button onClick={ liquidate } >
+                    Liquidate
+                </button> */}
             </div>
             <hr/>
         </div>
