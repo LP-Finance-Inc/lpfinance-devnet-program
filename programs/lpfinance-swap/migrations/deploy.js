@@ -11,17 +11,19 @@ const idl = require("../target/idl/lpfinance_swap.json");
 const programID = idl.metadata.address;
 
 console.log("ProgramID", programID);
-const swap_name = "swap_pool0";
+const swap_name = "swap_pool1";
 const pool_usdc = "pool_usdc";
 const pool_btc = "pool_btc";
 const pool_lpsol = "pool_lpsol";
 const pool_lpusd = "pool_lpusd";
+const pool_msol = "pool_msol";
 
 // Test Token's MINT
 const usdcMint = new PublicKey("2Q1WAAgnpEox5Y4b6Y8YyXVwFNhDdGot467XfvdBJaPf"); 
 const btcMint = new PublicKey("Hv96pk4HkhGcbNxkBvb7evTU88KzedvgVy2oddBB1ySB");
-const lpsolMint = new PublicKey("FCSUDXzfqc393wVcv4tWBU4LgRhJeDi8YA6BGTs3qVPP"); 
-const lpusdMint = new PublicKey("AL9fyDTSmJavYxjftxBHxkLtwv9FcsUJfVvEheW6vfdq");
+const lpsolMint = new PublicKey("BseXpATR4hqy7UHvyNztLK711mYPHNCsS5AcBzWzSq7X"); 
+const lpusdMint = new PublicKey("GPNCGAjyhA1qcSgSotQvJsM1xcGnDMgtTr9TJ1HVVQgG");
+const msolMint = new PublicKey("EJ94TwhddyUAra7i3qttQ64Q1wExJYb8GmACbHbAnvKF");
 
 module.exports = async function (provider) {
   // Configure client to use the provider.
@@ -37,7 +39,8 @@ module.exports = async function (provider) {
       poolUsdc: 0,
       poolBtc: 0,
       poolLpsol: 0,
-      poolLpusd: 0
+      poolLpusd: 0,
+      poolMsol: 0
     };
 
     // Find PDA from `cbs protocol` for state account
@@ -72,6 +75,14 @@ module.exports = async function (provider) {
     bumps.poolLpsol = poolLpsolBump;
     console.log("Pool-LpSOL:", poolLpsol.toBase58());
 
+    // Find PDA for `lpsol pool`
+    const [poolMsol, poolMsolBump] = await PublicKey.findProgramAddress(
+      [Buffer.from(swap_name), Buffer.from(pool_msol)],
+      program.programId
+    );
+    bumps.poolMsol = poolMsolBump;
+    console.log("Pool-MSOL:", poolMsol.toBase58());
+
     // Find PDA for `lpusd pool`
     const [poolLpusd, poolLpusdBump] = await PublicKey.findProgramAddress(
       [Buffer.from(swap_name), Buffer.from(pool_lpusd)],
@@ -94,10 +105,12 @@ module.exports = async function (provider) {
         btcMint,
         lpsolMint,
         lpusdMint,
+        msolMint,
         poolUsdc,
         poolBtc,
         poolLpsol,
         poolLpusd,
+        poolMsol,
         systemProgram: SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         rent: SYSVAR_RENT_PUBKEY,
@@ -108,6 +121,24 @@ module.exports = async function (provider) {
     console.log("Transaction error: ", err);
   }
 }
+
+// 2022-03-15 devnet
+
+// ProgramID 9jBjsXqKo6W54Hf65wrgR9k9AVYuCfDQQNUfygFtjWPJ
+// State-Account: 73v4gK2y12KJLZhAnGZ8ApQXGsgJ3LAydiGy25UickrR
+// Pool-USDC: 7R7ybuCqx5ibNmQJdS3ej6jF1ceoqzFPNurWEYTB64y8
+// Pool-BTC: 3g8X4CBf9XfqC5bqhy5ojfHV4YPni4i2ezr8GYfcPE8y
+// Pool-LpSOL: 5aC57PB7zD2myUWCmbisAik3AyNQf1vwdi4vsv5S6kRc
+// Pool-MSOL: F9RN5CfyP9TfXVMW1ekM2SPguDWWDJLqG632SNa8y4Br
+// Pool-LpUSD: 5sePY3AuQ1LtSH9UDimn4yDCUUsGoV8gQqKjyQSGvTFA
+// Bumps {
+//   stateAccount: 251,
+//   poolUsdc: 253,
+//   poolBtc: 255,
+//   poolLpsol: 254,
+//   poolLpusd: 255,
+//   poolMsol: 254
+// }
 
 // 2022-03-10 env
 // ProgramID 9jBjsXqKo6W54Hf65wrgR9k9AVYuCfDQQNUfygFtjWPJ

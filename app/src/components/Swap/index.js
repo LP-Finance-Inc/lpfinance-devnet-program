@@ -13,11 +13,11 @@ import {
 
 const {
     bumps, stateAccount, poolUsdc,  poolBtc,
-    poolLpsol, poolLpusd, swap_name
+    poolLpsol, poolLpusd, swap_name, poolMsol
 } = SWAP_Contants;
 
 const {
-    lpsolMint, lpusdMint, usdcMint, btcMint, pythBtcAccount, 
+    lpsolMint, lpusdMint, usdcMint, msolMint, btcMint, pythBtcAccount, pythMsolAccount,
     pythUsdcAccount, pythSolAccount, NETWORK
 } = COMMON_Contants;
 
@@ -47,13 +47,15 @@ export const Swap = () => {
             const usdcBalance = await getBalance(stateAccount, usdcMint);
             const lpsolBalance = await getBalance(stateAccount, lpsolMint);
             const lpusdBalance = await getBalance(stateAccount, lpusdMint);
+            const msolBalance = await getBalance(stateAccount, msolMint);
             const solBalance = await getSOLBalance(stateAccount);
             
             console.log("Swap SOL balance:", solBalance);
             console.log("Swap Btc balance:", btcBalance)
             console.log("Swap USDC balance:", usdcBalance)
             console.log("Swap LpSOL balance:", lpsolBalance)
-            console.log("Swap LpUSD balance:", lpusdBalance)            
+            console.log("Swap LpUSD balance:", lpusdBalance)      
+            console.log("Swap mSOL balance:", msolBalance)         
         } catch (err) {
             console.log(err);
         }
@@ -84,6 +86,7 @@ export const Swap = () => {
         if (token_name == "BTC") return btcMint;
         if (token_name == "LpSOL") return lpsolMint;
         if (token_name == "LpUSD") return lpusdMint;
+        if (token_name == "mSOL") return msolMint;
         return "";
     }
 
@@ -92,6 +95,7 @@ export const Swap = () => {
         if (token_name == "BTC") return poolBtc;
         if (token_name == "LpSOL") return poolLpsol;
         if (token_name == "LpUSD") return poolLpusd;
+        if (token_name == "mSOL") return poolMsol;
         return "";
     }
     
@@ -100,6 +104,7 @@ export const Swap = () => {
         if (token_name == "BTC") return pythBtcAccount;
         if (token_name == "LpSOL") return pythSolAccount;
         if (token_name == "LpUSD") return pythUsdcAccount;
+        if (token_name == "mSOL") return pythMsolAccount;
         return "";
     }
     
@@ -270,6 +275,9 @@ export const Swap = () => {
                 <button onClick={ () => SwapSOLToToken("LpSOL") }>
                     Swap SOL to LpSOL
                 </button>
+                <button onClick={ () => SwapSOLToToken("mSOL") }>
+                    Swap SOL to mSOL
+                </button>
             </div>
 
             <hr/>
@@ -286,6 +294,9 @@ export const Swap = () => {
                 </button>
                 <button onClick={ () => SwapTokenToSOL("LpSOL") }>
                     Swap LpSOL to SOL
+                </button>
+                <button onClick={ () => SwapTokenToSOL("mSOL") }>
+                    Swap mSOL to SOL
                 </button>
             </div>
 

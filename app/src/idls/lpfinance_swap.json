@@ -31,6 +31,11 @@
           "isSigner": false
         },
         {
+          "name": "msolMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "lpusdMint",
           "isMut": false,
           "isSigner": false
@@ -47,6 +52,11 @@
         },
         {
           "name": "poolLpsol",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolMsol",
           "isMut": true,
           "isSigner": false
         },
@@ -317,6 +327,10 @@
             "type": "publicKey"
           },
           {
+            "name": "msolMint",
+            "type": "publicKey"
+          },
+          {
             "name": "btcMint",
             "type": "publicKey"
           },
@@ -338,6 +352,10 @@
           },
           {
             "name": "poolLpusd",
+            "type": "publicKey"
+          },
+          {
+            "name": "poolMsol",
             "type": "publicKey"
           }
         ]
@@ -368,6 +386,10 @@
           },
           {
             "name": "poolLpsol",
+            "type": "u8"
+          },
+          {
+            "name": "poolMsol",
             "type": "u8"
           }
         ]

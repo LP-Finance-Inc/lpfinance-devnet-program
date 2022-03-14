@@ -225,9 +225,11 @@ pub mod cbs_protocol {
         msg!("Price SOL: !!{:?}!!", sol_price.to_string());
         msg!("Price USDC: !!{:?}!!", usdc_price.to_string());
         msg!("Price BTC: !!{:?}!!", btc_price.to_string());
+        msg!("Price mSOL: !!{:?}!!", msol_price.to_string());
 
         msg!("Borrow Value: !!{:?}!!", borrow_value.to_string());
         msg!("Total Value: !!{:?}!!", total_price.to_string());
+        msg!("Total Borrowed Value: !!{:?}!!", total_borrowed_price.to_string());
         let borrable_total = total_price * LTV / DOMINATOR - total_borrowed_price;
         msg!("Borrowable Total Value: !!{:?}!!", borrable_total.to_string());
 
