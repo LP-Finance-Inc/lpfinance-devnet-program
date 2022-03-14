@@ -24,23 +24,31 @@ pub mod faucet {
         state_account.bumps = bumps;
         state_account.tbtc_mint = ctx.accounts.tbtc_mint.key();
         state_account.tusdc_mint = ctx.accounts.tusdc_mint.key();
+        state_account.tmsol_mint = ctx.accounts.tmsol_mint.key();
         state_account.pool_tbtc = ctx.accounts.pool_tbtc.key();
         state_account.pool_tusdc = ctx.accounts.pool_tusdc.key();
+        state_account.pool_tmsol = ctx.accounts.pool_tmsol.key();
+        state_account.tbtc_amount = 200000000;
+        state_account.tusdc_amount = 1000000000000;
+        state_account.tmsol_amount = 10000000000;
 
         state_account.owner = ctx.accounts.authority.key();
         Ok(())
     }
 
     pub fn request_token(
-        ctx: Context<RequestToken>,
-        is_tusdc: bool
+        ctx: Context<RequestToken>
     ) -> Result<()> {
         let transfer_amount;
 
-        if is_tusdc {
-            transfer_amount = 100000000000;
+        if ctx.accounts.token_mint.to_account_info().key() == ctx.accounts.state_account.tbtc_mint {
+            transfer_amount = ctx.accounts.state_account.tbtc_amount;
+        } else if ctx.accounts.token_mint.to_account_info().key() == ctx.accounts.state_account.tusdc_mint {
+            transfer_amount = ctx.accounts.state_account.tbtc_amount;
+        } else if ctx.accounts.token_mint.to_account_info().key() == ctx.accounts.state_account.tmsol_mint {
+            transfer_amount = ctx.accounts.state_account.tmsol_amount;
         } else {
-            transfer_amount = 100000000;
+            return Err(ErrorCode::InvalidToken.into());
         }
 
         if ctx.accounts.pool_token.amount < transfer_amount {
@@ -64,6 +72,27 @@ pub mod faucet {
 
         Ok(())
     }
+
+    pub fn withdraw_token(ctx: Context<WithdrawToken>) -> Result<()> {
+        let seeds = &[
+            ctx.accounts.state_account.faucet_name.as_ref(),
+            &[ctx.accounts.state_account.bumps.state_account],
+        ];
+        let signer = &[&seeds[..]];
+
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.pool_token.to_account_info(),
+            to: ctx.accounts.user_token.to_account_info(),
+            authority: ctx.accounts.state_account.to_account_info()
+        };
+
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
+
+        token::transfer(cpi_ctx, ctx.accounts.pool_token.amount)?;
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -79,6 +108,7 @@ pub struct Initialize <'info>{
     pub state_account: Box<Account<'info, StateAccount>>,
     pub tusdc_mint: Box<Account<'info, Mint>>,
     pub tbtc_mint: Box<Account<'info, Mint>>,
+    pub tmsol_mint: Box<Account<'info, Mint>>,
     // tUSDC POOL
     #[account(
         init,
@@ -99,6 +129,16 @@ pub struct Initialize <'info>{
         payer = authority
     )]
     pub pool_tbtc: Account<'info, TokenAccount>,
+    // tBTC POOL
+    #[account(
+        init,
+        token::mint = tmsol_mint,
+        token::authority = state_account,
+        seeds = [faucet_name.as_bytes(), b"pool_tmsol".as_ref()],
+        bump,
+        payer = authority
+    )]
+    pub pool_tmsol: Account<'info, TokenAccount>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>
@@ -106,6 +146,32 @@ pub struct Initialize <'info>{
 
 #[derive(Accounts)]
 pub struct RequestToken<'info> {
+    #[account(mut)]
+    pub user_authority: Signer<'info>,
+    #[account(
+        init_if_needed,
+        payer = user_authority,
+        associated_token::mint = token_mint,
+        associated_token::authority = user_authority
+    )]
+    pub user_token: Box<Account<'info, TokenAccount>>,
+    pub token_mint: Account<'info, Mint>,
+    #[account(mut,
+        seeds = [state_account.faucet_name.as_ref()],
+        bump = state_account.bumps.state_account
+    )]
+    pub state_account: Box<Account<'info, StateAccount>>,
+    #[account(mut)]
+    pub pool_token: Box<Account<'info, TokenAccount>>,
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub rent: Sysvar<'info, Rent>
+}
+
+#[derive(Accounts)]
+pub struct WithdrawToken<'info> {
     #[account(mut)]
     pub user_authority: Signer<'info>,
     #[account(
@@ -138,19 +204,27 @@ pub struct StateAccount {
     pub owner: Pubkey,
     pub tbtc_mint: Pubkey,
     pub tusdc_mint: Pubkey,
+    pub tmsol_mint: Pubkey,    
     pub pool_tbtc: Pubkey,
-    pub pool_tusdc: Pubkey
+    pub pool_tusdc: Pubkey,
+    pub pool_tmsol: Pubkey,
+    pub tbtc_amount: u64,
+    pub tusdc_amount: u64, 
+    pub tmsol_amount: u64
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Default, Clone)]
 pub struct FaucetBumps{
     pub state_account: u8,
     pub pool_tusdc: u8,
-    pub pool_tbtc: u8
+    pub pool_tbtc: u8,
+    pub pool_tmsol: u8
 }
 
 #[error_code]
 pub enum ErrorCode {
     #[msg("Insufficient Pool's Amount")]
-    InsufficientPoolAmount
+    InsufficientPoolAmount,
+    #[msg("Wrong Token Address")]
+    InvalidToken
 }

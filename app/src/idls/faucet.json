@@ -26,12 +26,22 @@
           "isSigner": false
         },
         {
+          "name": "tmsolMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "poolTusdc",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "poolTbtc",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolTmsol",
           "isMut": true,
           "isSigner": false
         },
@@ -113,12 +123,58 @@
           "isSigner": false
         }
       ],
-      "args": [
+      "args": []
+    },
+    {
+      "name": "withdrawToken",
+      "accounts": [
         {
-          "name": "isTusdc",
-          "type": "bool"
+          "name": "userAuthority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "userToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stateAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
         }
-      ]
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -155,12 +211,32 @@
             "type": "publicKey"
           },
           {
+            "name": "tmsolMint",
+            "type": "publicKey"
+          },
+          {
             "name": "poolTbtc",
             "type": "publicKey"
           },
           {
             "name": "poolTusdc",
             "type": "publicKey"
+          },
+          {
+            "name": "poolTmsol",
+            "type": "publicKey"
+          },
+          {
+            "name": "tbtcAmount",
+            "type": "u64"
+          },
+          {
+            "name": "tusdcAmount",
+            "type": "u64"
+          },
+          {
+            "name": "tmsolAmount",
+            "type": "u64"
           }
         ]
       }
@@ -183,6 +259,10 @@
           {
             "name": "poolTbtc",
             "type": "u8"
+          },
+          {
+            "name": "poolTmsol",
+            "type": "u8"
           }
         ]
       }
@@ -194,6 +274,9 @@
         "variants": [
           {
             "name": "InsufficientPoolAmount"
+          },
+          {
+            "name": "InvalidToken"
           }
         ]
       }
