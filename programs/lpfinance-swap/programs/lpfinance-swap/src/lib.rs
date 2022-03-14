@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{program::invoke, system_instruction };
 use pyth_client;
 use anchor_spl::token::{self, Mint, Transfer, Token, TokenAccount };
+use anchor_spl::associated_token::AssociatedToken;
 
 declare_id!("9jBjsXqKo6W54Hf65wrgR9k9AVYuCfDQQNUfygFtjWPJ");
 
@@ -312,9 +313,10 @@ pub struct SwapSOLToToken<'info> {
     pub dest_mint: Account<'info,Mint>,
     // User's Token account For dest_mint
     #[account(
-        mut,
-        constraint = user_dest.owner == user_authority.key(),
-        constraint = user_dest.mint == dest_mint.key()
+        init_if_needed,
+        payer = user_authority,
+        associated_token::mint = dest_mint,
+        associated_token::authority = user_authority
     )]
     pub user_dest : Box<Account<'info, TokenAccount>>,
     // Swap Pool for dest_mint token
@@ -330,6 +332,7 @@ pub struct SwapSOLToToken<'info> {
     pub pyth_dest_account: AccountInfo<'info>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>
 }
@@ -394,7 +397,12 @@ pub struct SwapTokenToToken<'info> {
     pub quote_mint: Account<'info,Mint>,
     #[account(mut)]
     pub dest_mint: Account<'info,Mint>,
-    #[account(mut)]
+    #[account(
+        init_if_needed,
+        payer = user_authority,
+        associated_token::mint = dest_mint,
+        associated_token::authority = user_authority
+    )]
     pub user_dest : Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub dest_pool : Box<Account<'info, TokenAccount>>,
@@ -402,6 +410,7 @@ pub struct SwapTokenToToken<'info> {
     pub pyth_dest_account: AccountInfo<'info>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>
 }
