@@ -13,8 +13,8 @@ import {
 
 const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
 
-const { btcMint, usdcMint, NETWORK} = COMMON_Contants;
-const { poolBtc, poolUsdc,faucet_name } = Faucet_Constants;
+const { btcMint, usdcMint, tmsolMint, NETWORK} = COMMON_Contants;
+const { poolBtc, poolUsdc, poolTmsol, faucet_name } = Faucet_Constants;
 // const netconfig = "devnet";
 // const connection = new anchor.web3.Connection(anchor.web3.clusterApiUrl(netconfig));
 
@@ -69,12 +69,14 @@ export const Faucet = () => {
     const getTokenMint = (token_name) => {
         if (token_name == "tUSDC") return usdcMint;
         if (token_name == "tBTC") return btcMint;
+        if (token_name == "tmSOL") return tmsolMint;
         return "";
     }
 
     const getPoolMint = (token_name) => {
         if (token_name == "tUSDC") return poolUsdc;
         if (token_name == "tBTC") return poolBtc;
+        if (token_name == "tmSOL") return poolTmsol;
         return "";
     }    
     
@@ -125,7 +127,7 @@ export const Faucet = () => {
         
         console.log("Info:",tokenMint.toBase58(), userToken.toBase58(), poolToken.toBase58())
         try {
-            await program.rpc.requestToken(keyword == "tUSDC", {
+            await program.rpc.requestToken({
                 accounts: {
                     userAuthority,
                     stateAccount,
@@ -158,6 +160,9 @@ export const Faucet = () => {
                 </button>
                 <button onClick={ () => request_faucet("SOL") }>
                     Request SOL
+                </button>
+                <button onClick={ () => request_faucet("tmSOL") }>
+                    Request tmSOL
                 </button>
             </div>
         </div>
