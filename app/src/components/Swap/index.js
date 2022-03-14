@@ -143,6 +143,7 @@ export const Swap = () => {
                     pythDestAccount: getPythMint(keyword),
                     systemProgram: SystemProgram.programId,
                     tokenProgram: TOKEN_PROGRAM_ID,
+                    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
                     rent: SYSVAR_RENT_PUBKEY
                 }
             })
@@ -242,6 +243,7 @@ export const Swap = () => {
                     pythQuoteAccount: getPythMint(quote_key),
                     pythDestAccount: getPythMint(dest_key),
                     systemProgram: SystemProgram.programId,
+                    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
                     tokenProgram: TOKEN_PROGRAM_ID,
                     rent: SYSVAR_RENT_PUBKEY
                 }
