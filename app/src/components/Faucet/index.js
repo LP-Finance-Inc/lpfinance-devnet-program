@@ -13,8 +13,10 @@ import {
 
 const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
 
-const { btcMint, usdcMint, tmsolMint, NETWORK} = COMMON_Contants;
+const { btcMint, usdcMint, msolMint, NETWORK} = COMMON_Contants;
 const { poolBtc, poolUsdc, poolTmsol, faucet_name } = Faucet_Constants;
+
+const tmsolMint = msolMint;
 // const netconfig = "devnet";
 // const connection = new anchor.web3.Connection(anchor.web3.clusterApiUrl(netconfig));
 

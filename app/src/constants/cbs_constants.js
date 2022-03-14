@@ -1,7 +1,7 @@
 import * as anchor from '@project-serum/anchor';
 const { PublicKey } = anchor.web3;
 
-export const cbs_name = "cbs_pool03";
+export const cbs_name = "cbs_pool05";
 
 export const bumps = {
     stateAccount: 252,

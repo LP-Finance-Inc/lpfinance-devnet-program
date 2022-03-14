@@ -13,13 +13,13 @@ import {
 } from '../../helpers';
 import { getTokensPriceList } from '../../helpers/price';
 const {
-    bumps, stateAccount, poolUsdc,  poolBtc,
+    bumps, stateAccount, poolUsdc,  poolBtc, poolMsol,
     poolLpsol, poolLpusd, cbs_name
 } = CBS_Contants;
 
 const {
-    lpsolMint, lpusdMint, usdcMint, btcMint, pythBtcAccount, 
-    pythUsdcAccount, pythSolAccount, NETWORK
+    lpsolMint, lpusdMint, usdcMint, btcMint, msolMint, pythBtcAccount, 
+    pythUsdcAccount, pythSolAccount, NETWORK, pythMsolAccount
 } = COMMON_Contants;
 
 
@@ -96,11 +96,13 @@ export const BorrowComponent = () => {
             const usdcBalance = await getBalance(publicKey, usdcMint);
             const lpsolBalance = await getBalance(publicKey, lpsolMint);
             const lpusdBalance = await getBalance(publicKey, lpusdMint);
+            const msolBalance = await getBalance(publicKey, msolMint);
     
             console.log("Btc balance:", btcBalance)
             console.log("USDC balance:", usdcBalance)
             console.log("LpSOL balance:", lpsolBalance)
             console.log("LpUSD balance:", lpusdBalance)
+            console.log("mSOL balance:", msolBalance)
             
             // Get info from user's state account
             const provider = await getProvider();
@@ -114,6 +116,7 @@ export const BorrowComponent = () => {
             console.log("Deposited SOL:", convert_from_wei(accountData.solAmount.toString()));
             console.log("Deposited USDC:", convert_from_wei(accountData.usdcAmount.toString()));
             console.log("Deposited BTC:", convert_from_wei(accountData.btcAmount.toString()));
+            console.log("Deposited mSOL:", convert_from_wei(accountData.msolAmount.toString()));
 
             // Get info from cbs program's state account
             const programData = await readStateAccount(provider, stateAccount);
@@ -127,6 +130,7 @@ export const BorrowComponent = () => {
             console.log("Total deposited BTC:", convert_from_wei(programData.totalDepositedBtc.toString()));
             console.log("Total deposited LpSOL:", convert_from_wei(programData.totalDepositedLpsol.toString()));
             console.log("Total deposited LpUSD:", convert_from_wei(programData.totalDepositedLpusd.toString()));
+            console.log("Total deposited mSOL:", convert_from_wei(programData.totalDepositedMsol.toString()));
 
             // const SOL_PRICE  = from pyth // 
             // const total_price = convert_from_wei(programData.totalDepositedSol) * SOL_PRICE
@@ -351,6 +355,11 @@ export const BorrowComponent = () => {
             collateralMint = btcMint;
             poolSeed = "pool_btc";
             poolBump = bumps.poolBtc;
+        } else if(depositTokenName == "msol") {
+            collateralPool = poolMsol;
+            collateralMint = msolMint;
+            poolSeed = "pool_msol";
+            poolBump = bumps.poolMsol;
         } else {
             alert("Invalid");
         }
@@ -452,6 +461,7 @@ export const BorrowComponent = () => {
                         pythBtcAccount,
                         pythUsdcAccount,
                         pythSolAccount,
+                        pythMsolAccount,
                         systemProgram: SystemProgram.programId,
                         tokenProgram: TOKEN_PROGRAM_ID,
                         rent: SYSVAR_RENT_PUBKEY
@@ -495,6 +505,9 @@ export const BorrowComponent = () => {
                 </button>
                 <button onClick={ () => deposit_tokens("lpsol") }>
                     Deposit LpSOL
+                </button>
+                <button onClick={ () => deposit_tokens("msol") }>
+                    Deposit mSOL
                 </button>
             </div>
             <hr />
