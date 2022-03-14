@@ -94,6 +94,13 @@ module.exports = async function (provider) {
     console.log("Transaction error: ", err);
   }
 }
+// 2022-03-14 2
+// ProgramID 7G5gNHT2T2fdb9EHY5K6FEPc6Z1mAF8M5uhURWDbsBjE
+// State-Account: G9vKpJfDcfu5SqmLVsqQSTDEsLw5QfyYAAVKkZAYHmyE
+// Pool-USDC: 8EDkavvKkrnSH5fsrL69nb9St3dehNaVmwskucFzKWcJ
+// Pool-BTC: A8oA9Eh4NzWRPLRULRBPpDdxpV8H8o7Nhi4rQ6FansKq
+// Pool-Tmsol: 2cEhXc4ShLZpdo2fhG7Rhk3MeHGd9gYx9vhhV2HC1JU5
+// Bumps { stateAccount: 255, poolTusdc: 255, poolTbtc: 255, poolTmsol: 255 }
 
 // 2022-03-14
 // ProgramID 7G5gNHT2T2fdb9EHY5K6FEPc6Z1mAF8M5uhURWDbsBjE
