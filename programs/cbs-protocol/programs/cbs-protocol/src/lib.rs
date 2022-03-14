@@ -387,16 +387,6 @@ pub mod cbs_protocol {
 }
 
 #[derive(Accounts)]
-pub struct GetTV<'info> {
-    // state account for user's wallet
-    #[account(mut,
-        seeds = [state_account.protocol_name.as_ref()],
-        bump= state_account.bumps.state_account
-    )]
-    pub state_account: Box<Account<'info, StateAccount>>,
-}
-
-#[derive(Accounts)]
 #[instruction(protocol_name: String, bumps: ProtocolBumps)]
 pub struct Initialize<'info> {
     // Token program authority

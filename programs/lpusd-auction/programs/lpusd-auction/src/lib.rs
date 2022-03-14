@@ -78,6 +78,8 @@ pub mod lpusd_auction {
         ctx: Context<DepositLpUSD>,
         amount: u64
     ) -> Result<()> {
+        msg!("UserLpUSD Balance: !!{:?}!!", ctx.accounts.user_lpusd.amount);
+
         if ctx.accounts.user_lpusd.amount < amount {
             return Err(ErrorCode::InsufficientAmount.into());
         }
@@ -98,6 +100,8 @@ pub mod lpusd_auction {
         let state_account = &mut ctx.accounts.state_account;
         state_account.lpusd_amount = state_account.lpusd_amount + amount;
         
+        msg!("Reward Percent: !!{:?}!!", state_account.reward_percent);
+
         // Need to calcuate discount of reward
         let discount_value = (state_account.reward_percent - 100) * amount;
         user_account.discount_reward = user_account.discount_reward + discount_value / 100;
