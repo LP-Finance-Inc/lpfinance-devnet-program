@@ -9,6 +9,7 @@ export const lpsolMint = new PublicKey("FCSUDXzfqc393wVcv4tWBU4LgRhJeDi8YA6BGTs3
 export const lpusdMint = new PublicKey("AL9fyDTSmJavYxjftxBHxkLtwv9FcsUJfVvEheW6vfdq");
 export const usdcMint = new PublicKey("2Q1WAAgnpEox5Y4b6Y8YyXVwFNhDdGot467XfvdBJaPf");
 export const btcMint = new PublicKey("Hv96pk4HkhGcbNxkBvb7evTU88KzedvgVy2oddBB1ySB");
+export const tmsolMint = new PublicKey("EJ94TwhddyUAra7i3qttQ64Q1wExJYb8GmACbHbAnvKF");
 
 // ======> PYTH
 export const pythBtcAccount = new PublicKey("HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J"); // 3m1y5h2uv7EQL3KaJZehvAJa4yDNvgc5yAdL9KPMKwvk
