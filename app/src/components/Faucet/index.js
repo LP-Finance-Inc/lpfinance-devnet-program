@@ -82,7 +82,26 @@ export const Faucet = () => {
     const request_faucet = async (keyword) => {
         console.log("Request Faucet")
 
+
         const userAuthority = wallet.publicKey;
+        
+        if (keyword === "SOL") {
+            try {
+                const connection = new Connection(NETWORK, "processed");
+
+                let airdropSignature = await connection.requestAirdrop(
+                    userAuthority,
+                    anchor.web3.LAMPORTS_PER_SOL,
+                );
+            
+                await connection.confirmTransaction(airdropSignature);
+                console.log("1 SOL transferred to your account")
+            } catch (err) {
+                console.log(err);
+            }
+            return;
+        }
+
         const provider = await getProvider();
         anchor.setProvider(provider);
         // address of deployed program
@@ -114,6 +133,7 @@ export const Faucet = () => {
                     tokenMint,
                     poolToken,
                     systemProgram: SystemProgram.programId,
+                    associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
                     tokenProgram: TOKEN_PROGRAM_ID,
                     rent: SYSVAR_RENT_PUBKEY
                 }
@@ -135,6 +155,9 @@ export const Faucet = () => {
                 </button>
                 <button onClick={ () => request_faucet("tBTC") }>
                     Request tBTC
+                </button>
+                <button onClick={ () => request_faucet("SOL") }>
+                    Request SOL
                 </button>
             </div>
         </div>
