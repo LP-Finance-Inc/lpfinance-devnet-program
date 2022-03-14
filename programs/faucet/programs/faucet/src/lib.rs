@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Transfer, Token, TokenAccount };
+use anchor_spl::associated_token::AssociatedToken;
 
 declare_id!("7G5gNHT2T2fdb9EHY5K6FEPc6Z1mAF8M5uhURWDbsBjE");
 
@@ -108,9 +109,10 @@ pub struct RequestToken<'info> {
     #[account(mut)]
     pub user_authority: Signer<'info>,
     #[account(
-        mut,
-        constraint = user_token.owner == user_authority.key(),
-        constraint = user_token.mint == token_mint.key()
+        init_if_needed,
+        payer = user_authority,
+        associated_token::mint = token_mint,
+        associated_token::authority = user_authority
     )]
     pub user_token: Box<Account<'info, TokenAccount>>,
     pub token_mint: Account<'info, Mint>,
@@ -124,6 +126,7 @@ pub struct RequestToken<'info> {
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
     pub rent: Sysvar<'info, Rent>
 }
 
