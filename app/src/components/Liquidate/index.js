@@ -46,14 +46,14 @@ export const Liqudate = () => {
             const accountData = await readAuctionUserAccount(provider, publicKey);
             if (!accountData) return;
             console.log("Account Data:", accountData);
-            console.log("Deposited LpSOL:", convert_from_wei(accountData.lpusdAmount.toString()));
+            console.log("Deposited LpUSD:", convert_from_wei(accountData.lpusdAmount.toString())); // 100 Lpusd
             console.log("Discount Reward:", convert_from_wei(accountData.discountReward.toString()));
 
             // Get info from cbs program's state account
             const programData = await readAuctionStateAccount(provider, stateAccount);
             console.log("Program Data:", programData);
 
-            console.log("Reward Percent:", programData.rewardPercent.toString());
+            console.log("Reward Percent:", programData.rewardPercent.toString()); // 110 %  110 Lpusd
             console.log("Auction Total deposited LpUSD:", convert_from_wei(programData.lpusdAmount.toString()));
         } catch (err) {
             console.log(err);
