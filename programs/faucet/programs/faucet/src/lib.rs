@@ -74,6 +74,13 @@ pub mod faucet {
     }
 
     pub fn withdraw_token(ctx: Context<WithdrawToken>) -> Result<()> {
+        if ctx.accounts.state_account.owner != ctx.accounts.user_authority.to_account_info().key() {
+            return Err(ErrorCode::NotAllowed.into());
+        }
+        if ctx.accounts.pool_token.amount < 1 {
+            return Err(ErrorCode::InsufficientPoolAmount.into());
+        }
+
         let seeds = &[
             ctx.accounts.state_account.faucet_name.as_ref(),
             &[ctx.accounts.state_account.bumps.state_account],
@@ -226,5 +233,7 @@ pub enum ErrorCode {
     #[msg("Insufficient Pool's Amount")]
     InsufficientPoolAmount,
     #[msg("Wrong Token Address")]
-    InvalidToken
+    InvalidToken,
+    #[msg("Wrong Owner")]
+    NotAllowed
 }

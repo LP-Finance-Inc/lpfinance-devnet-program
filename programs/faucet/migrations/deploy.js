@@ -10,13 +10,15 @@ const idl = require("../target/idl/faucet.json");
 const programID = idl.metadata.address;
 
 console.log("ProgramID", programID);
-const faucet_name = "faucet_000";
+const faucet_name = "faucet_001";
 const pool_tusdc = "pool_tusdc";
 const pool_tbtc = "pool_tbtc";
+const pool_tmsol = "pool_tmsol";
 
 // Test Token's MINT
 const tusdcMint = new PublicKey("2Q1WAAgnpEox5Y4b6Y8YyXVwFNhDdGot467XfvdBJaPf"); 
 const tbtcMint = new PublicKey("Hv96pk4HkhGcbNxkBvb7evTU88KzedvgVy2oddBB1ySB");
+const tmsolMint = new PublicKey("EJ94TwhddyUAra7i3qttQ64Q1wExJYb8GmACbHbAnvKF");
 
 module.exports = async function (provider) {
   // Configure client to use the provider.
@@ -30,7 +32,8 @@ module.exports = async function (provider) {
     let bumps = {
       stateAccount: 0,
       poolTusdc: 0,
-      poolTbtc: 0
+      poolTbtc: 0,
+      poolTmsol: 0
     };
 
     // Find PDA from `cbs protocol` for state account
@@ -57,6 +60,14 @@ module.exports = async function (provider) {
     bumps.poolTbtc = poolTbtcBump;
     console.log("Pool-BTC:", poolTbtc.toBase58());
 
+    // Find PDA for `tmsol pool`
+    const [poolTmsol, poolTmsolBump] = await PublicKey.findProgramAddress(
+      [Buffer.from(faucet_name), Buffer.from(pool_tmsol)],
+      program.programId
+    );
+    bumps.poolTmsol = poolTmsolBump;
+    console.log("Pool-Tmsol:", poolTmsol.toBase58());
+
     console.log("Bumps", bumps);
 
     // Signer
@@ -69,8 +80,10 @@ module.exports = async function (provider) {
         stateAccount,
         tusdcMint,
         tbtcMint,
+        tmsolMint,
         poolTusdc,
         poolTbtc,
+        poolTmsol,
         systemProgram: SystemProgram.programId,
         tokenProgram: TOKEN_PROGRAM_ID,
         rent: SYSVAR_RENT_PUBKEY,
