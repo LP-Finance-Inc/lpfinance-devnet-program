@@ -35,6 +35,7 @@ export const BorrowComponent = () => {
     const [depositAmount, setDepositAmount] = useState('');
     const [borrowAmount, setBorrowAmount] = useState('');
     const [withdrawAmount, setWithdrawAmount] = useState('');
+    const [repayAmount, setRepayAmount] = useState('');
 
     const [solPrice, setSolPrice] = useState('');
 
@@ -596,7 +597,105 @@ export const BorrowComponent = () => {
             console.log(err);
         }
     }
+
+    const repay_sol = async () => {
+        try {
+            const userAuthority = wallet.publicKey;
+            const provider = await getProvider();
+            anchor.setProvider(provider);
+            // address of deployed program
+            const programId = new PublicKey(idl.metadata.address);    
+            // Generate the program client from IDL.
+            const program = new anchor.Program(idl, programId);
+            
+            // Find PDA from `seed` for state account
+            const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
+                [Buffer.from(cbs_name), Buffer.from(userAuthority.toBuffer())],
+                program.programId
+            );
+            
+            // SOL decimal is 9
+            const repay_wei = convert_to_wei(repayAmount);
+            const repay_amount = new anchor.BN(repay_wei); // '100000000'
+            console.log("repay Amount:", repay_amount.toString())
+            await program.rpc.repaySol(repay_amount, {
+                accounts: {
+                    userAuthority,
+                    stateAccount,
+                    userAccount,
+                    systemProgram: SystemProgram.programId,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    rent: SYSVAR_RENT_PUBKEY
+                }
+            })
+            await getInfo();
+        } catch (err) {
+            console.log(err);
+        }
+    }
     
+    const repay_token = async (tokenName) => {
+        try {
+            
+            const userAuthority = wallet.publicKey;
+            const provider = await getProvider();
+            anchor.setProvider(provider);
+            // address of deployed program
+            const programId = new PublicKey(idl.metadata.address);    
+            // Generate the program client from IDL.
+            const program = new anchor.Program(idl, programId);
+            
+            // Find PDA from `seed` for state account
+            const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
+                [Buffer.from(cbs_name), Buffer.from(userAuthority.toBuffer())],
+                program.programId
+            );
+
+            let destMint = null;
+            let destPool = null;
+            if (tokenName == "lpusd") {
+                destMint = lpusdMint;
+                destPool = poolLpusd;
+            } else if(tokenName == "lpsol") {
+                destMint = lpsolMint;
+                destPool = poolLpsol;
+            } else if(tokenName == "usdc") {
+                destMint = usdcMint;
+                destPool = poolUsdc;
+            } else {
+                alert("Invalid");
+            }
+
+            const userDest = await Token.getAssociatedTokenAddress(
+                ASSOCIATED_TOKEN_PROGRAM_ID,
+                TOKEN_PROGRAM_ID,
+                destMint,
+                userAuthority
+            )
+            
+            // SOL decimal is 9
+            const repay_wei = convert_to_wei(repayAmount);
+            const repay_amount = new anchor.BN(repay_wei); // '100000000'
+            console.log("repay Amount:", repay_amount.toString())
+            await program.rpc.repayToken(repay_amount, {
+                accounts: {
+                    userAuthority,
+                    stateAccount,
+                    destMint,
+                    userDest,
+                    destPool,
+                    userAccount,
+                    systemProgram: SystemProgram.programId,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    rent: SYSVAR_RENT_PUBKEY
+                }
+            })
+            await getInfo();
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
     return (
         <div>  
             <h2>1) CBS protocol</h2>
@@ -663,6 +762,24 @@ export const BorrowComponent = () => {
             </button>
             <button onClick={() => withdraw_token('msol') } >
                 Withdraw mSOL
+            </button>
+            <hr/>
+            <div>
+                <p>Please enter the amount of token to repay</p>
+                <input type="text" value={ repayAmount } onChange={(e) => setRepayAmount(e.target.value)}/>
+            </div>
+            <button onClick={ repay_sol } >
+                Repay SOL
+            </button>
+            
+            <button onClick={() => repay_token('usdc') } >
+                Repay USDC
+            </button>
+            <button onClick={() => repay_token('lpusd') } >
+                Repay LpUSD
+            </button>
+            <button onClick={() => repay_token('lpsol') } >
+                Repay LpSOL
             </button>
             <hr/>
         </div>
