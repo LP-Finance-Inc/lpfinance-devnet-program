@@ -629,7 +629,7 @@ pub struct AuctionStateAccount {
     pub btc_amount: u64,
     pub usdc_amount: u64,
     pub msol_amount: u64,
-    pub reward_percent: u64,
+    pub reward_percent: u64, // 105% 
     pub reward_denominator: u64
 }
 

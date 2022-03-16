@@ -166,6 +166,52 @@ export const Liqudate = () => {
 
         console.log("End transaction")
     }
+
+    const withdraw_lpusd = async () => {
+        console.log("Start withdraw")
+
+        const userAuthority = wallet.publicKey;
+        const provider = await getProvider();
+        anchor.setProvider(provider);
+        // address of deployed program
+        const programId = new PublicKey(idl.metadata.address);    
+        // Generate the program client from IDL.
+        const program = new anchor.Program(idl, programId);
+        
+        const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
+            [Buffer.from(auction_name), Buffer.from(userAuthority.toBuffer())],
+            program.programId
+        );
+           
+
+        const userLpusd = await Token.getAssociatedTokenAddress(
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+            TOKEN_PROGRAM_ID,
+            lpusdMint,
+            userAuthority
+        )
+        
+        try {
+            await program.rpc.withdrawLpusd({
+                accounts: {
+                    userAuthority,
+                    userLpusd,
+                    lpusdMint,
+                    stateAccount,
+                    poolLpusd,
+                    userAccount,
+                    systemProgram: SystemProgram.programId,
+                    tokenProgram: TOKEN_PROGRAM_ID,
+                    rent: SYSVAR_RENT_PUBKEY
+                }
+            })
+            await getInfo();
+        } catch (err) {
+            console.log(err);
+        }
+        console.log("End transaction")
+
+    }
     
     const liquidate = async () => {
         try {
@@ -256,9 +302,12 @@ export const Liqudate = () => {
                 <button onClick={ deposite_lpusd } >
                     Deposit LpUSD
                 </button>
-                <button onClick={ liquidate } >
-                    Liquidate
+                <button onClick={ withdraw_lpusd } >
+                    Withdraw
                 </button>
+                {/* <button onClick={ liquidate } >
+                    Liquidate
+                </button> */}
             </div>
             <hr/>
         </div>
