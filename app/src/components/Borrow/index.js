@@ -34,6 +34,7 @@ export const BorrowComponent = () => {
 
     const [depositAmount, setDepositAmount] = useState('');
     const [borrowAmount, setBorrowAmount] = useState('');
+    const [withdrawAmount, setWithdrawAmount] = useState('');
 
     const [solPrice, setSolPrice] = useState('');
 
@@ -479,6 +480,123 @@ export const BorrowComponent = () => {
     }
     
     
+    const withdraw_sol = async () => {
+        try {
+            const userAuthority = wallet.publicKey;
+            const provider = await getProvider();
+            anchor.setProvider(provider);
+            // address of deployed program
+            const programId = new PublicKey(idl.metadata.address);    
+            // Generate the program client from IDL.
+            const program = new anchor.Program(idl, programId);
+            
+            const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
+                // [Buffer.from(cbs_name), Buffer.from(seed0), Buffer.from(seed1)],
+                [Buffer.from(cbs_name), Buffer.from(userAuthority.toBuffer())],
+                program.programId
+            );
+
+            try {
+                const withdraw_wei = convert_to_wei(withdrawAmount);
+                const withdraw_amount = new anchor.BN(withdraw_wei);
+                
+                await program.rpc.withdrawSol(withdraw_amount, {
+                    accounts: {
+                        userAuthority,
+                        userAccount,
+                        stateAccount,
+                        pythBtcAccount,
+                        pythUsdcAccount,
+                        pythSolAccount,
+                        pythMsolAccount,
+                        systemProgram: SystemProgram.programId,
+                        tokenProgram: TOKEN_PROGRAM_ID,
+                        rent: SYSVAR_RENT_PUBKEY
+                    }
+                })
+                await getInfo();
+            } catch (err) {
+                console.log(err);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    const withdraw_token = async (tokenName) => {
+        try {
+            const userAuthority = wallet.publicKey;
+            const provider = await getProvider();
+            anchor.setProvider(provider);
+            // address of deployed program
+            const programId = new PublicKey(idl.metadata.address);    
+            // Generate the program client from IDL.
+            const program = new anchor.Program(idl, programId);
+            
+            const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
+                // [Buffer.from(cbs_name), Buffer.from(seed0), Buffer.from(seed1)],
+                [Buffer.from(cbs_name), Buffer.from(userAuthority.toBuffer())],
+                program.programId
+            );
+
+            let destMint = null;
+            let destPool = null;
+            if (tokenName == "lpusd") {
+                destMint = lpusdMint;
+                destPool = poolLpusd;
+            } else if(tokenName == "lpsol") {
+                destMint = lpsolMint;
+                destPool = poolLpsol;
+            } else if(tokenName == "usdc") {
+                destMint = usdcMint;
+                destPool = poolUsdc;
+            } else if(tokenName == "btc") {
+                destMint = btcMint;
+                destPool = poolBtc;
+            } else if(tokenName == "msol") {
+                destMint = msolMint;
+                destPool = poolMsol;
+            } else {
+                alert("Invalid");
+            }
+
+            const userDest = await Token.getAssociatedTokenAddress(
+                ASSOCIATED_TOKEN_PROGRAM_ID,
+                TOKEN_PROGRAM_ID,
+                destMint,
+                userAuthority
+            )
+
+            try {
+                const withdraw_wei = convert_to_wei(withdrawAmount);
+                const withdraw_amount = new anchor.BN(withdraw_wei);
+                
+                await program.rpc.withdrawToken(withdraw_amount, {
+                    accounts: {
+                        userAuthority,
+                        userAccount,
+                        stateAccount,
+                        userDest,
+                        destPool,
+                        destMint,
+                        pythBtcAccount,
+                        pythUsdcAccount,
+                        pythSolAccount,
+                        pythMsolAccount,
+                        systemProgram: SystemProgram.programId,
+                        tokenProgram: TOKEN_PROGRAM_ID,
+                        rent: SYSVAR_RENT_PUBKEY
+                    }
+                })
+                await getInfo();
+            } catch (err) {
+                console.log(err);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
+    
     return (
         <div>  
             <h2>1) CBS protocol</h2>
@@ -522,9 +640,30 @@ export const BorrowComponent = () => {
                 Request LpSOL Token
             </button>
 
-            {/* <button onClick={ withdraw } >
-                Withdraw
-            </button> */}
+            <hr/>
+            <div>
+                <p>Please enter the amount of SOL to withdraw</p>
+                <input type="text" value={ withdrawAmount } onChange={(e) => setWithdrawAmount(e.target.value)}/>
+            </div>
+            <button onClick={ withdraw_sol } >
+                Withdraw SOL
+            </button>
+            
+            <button onClick={() => withdraw_token('usdc') } >
+                Withdraw USDC
+            </button>
+            <button onClick={() => withdraw_token('btc') } >
+                Withdraw BTC
+            </button>
+            <button onClick={() => withdraw_token('lpusd') } >
+                Withdraw LpUSD
+            </button>
+            <button onClick={() => withdraw_token('lpsol') } >
+                Withdraw LpSOL
+            </button>
+            <button onClick={() => withdraw_token('msol') } >
+                Withdraw mSOL
+            </button>
             <hr/>
         </div>
     );
