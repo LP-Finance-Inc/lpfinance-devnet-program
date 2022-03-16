@@ -12,9 +12,83 @@ const LP_TOKEN_DECIMALS: u8 = 9;
 const LTV:u128 = 85;
 const DOMINATOR:u128 = 100;
 
-// pub fn get_price(pyth_account: AccountInfo) -> u64 {
-//     return 64;
-// }
+pub fn get_price(
+    // state_account: UserAccount,
+    user_account: UserAccount,
+    // pyth_btc_account: AccountInfo,
+    // pyth_usdc_account: AccountInfo,
+    // pyth_sol_account: AccountInfo,
+    // pyth_msol_account: AccountInfo
+) -> u64 {
+    let sol_amount = user_account.sol_amount;
+
+    // let sol_amount = user_account.sol_amount as u128;
+    // let btc_amount = user_account.btc_amount as u128;
+    // let usdc_amount = user_account.usdc_amount as u128;
+    // let lpsol_amount = user_account.lpsol_amount as u128;
+    // let msol_amount = user_account.msol_amount as u128;
+    // let lpusd_amount = user_account.lpusd_amount as u128;
+    // let borrowed_lpusd = user_account.borrowed_lpusd as u128;
+    // let borrowed_lpsol = user_account.borrowed_lpsol as u128;
+    return sol_amount;
+    // let mut total_price: u128 = 0;
+
+    // // BTC price
+    // let pyth_price_info = &ctx.accounts.pyth_btc_account;
+    // let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+    // let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+    // let btc_price = pyth_price.agg.price as u128;     
+    // total_price += btc_price * btc_amount;
+
+    // // SOL price
+    // let pyth_price_info = &ctx.accounts.pyth_sol_account;
+    // let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+    // let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+    // let sol_price = pyth_price.agg.price as u128;     
+    // total_price += sol_price * sol_amount;
+
+    // // USDC price
+    // let pyth_price_info = &ctx.accounts.pyth_usdc_account;
+    // let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+    // let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+    // let usdc_price = pyth_price.agg.price as u128;        
+    // total_price += usdc_price * usdc_amount;
+
+    // // mSOL price
+    // let pyth_price_info = &ctx.accounts.pyth_msol_account;
+    // let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+    // let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+    // let msol_price = pyth_price.agg.price as u128;        
+    // total_price += msol_price * msol_amount;
+
+    // // LpUSD price
+    // let lpusd_price = usdc_price;        
+    // total_price += lpusd_price * lpusd_amount;
+
+    // // LpSOL price
+    // let lpsol_price = sol_price;
+    // total_price += lpsol_price * lpsol_amount;
+
+    // let mut borrowed_total: u128 = 0;
+    // borrowed_total += borrowed_lpsol * lpsol_price;
+    // borrowed_total += borrowed_lpusd * lpusd_price;
+
+    // if total_price * LTV < borrowed_total * DOMINATOR {
+    //     return Err(ErrorCode::InvalidAmount.into());
+    // }
+    
+    // if amount > sol_amount as u64 {
+    //     return Err(ErrorCode::InvalidAmount.into());
+    // }
+    // let borrowable_amount = (total_price - borrowed_total * DOMINATOR / LTV) / sol_price;
+    // if amount > borrowable_amount as u64{
+    //     return Err(ErrorCode::InvalidAmount.into());
+    // }
+}
 
 #[program]
 pub mod cbs_protocol {
@@ -425,6 +499,9 @@ pub mod cbs_protocol {
         **ctx.accounts.state_account.to_account_info().try_borrow_mut_lamports()? -= amount;
         **ctx.accounts.user_authority.try_borrow_mut_lamports()? += amount;
 
+        user_account.sol_amount -= amount;
+        ctx.accounts.state_account.total_deposited_sol -= amount;
+
         Ok(())
     }
 
@@ -538,6 +615,25 @@ pub mod cbs_protocol {
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
         token::transfer(cpi_ctx, amount)?;
 
+        
+
+        if ctx.accounts.dest_mint.key() == ctx.accounts.state_account.usdc_mint {
+            user_account.usdc_amount -= amount;
+            ctx.accounts.state_account.total_deposited_usdc -= amount;
+        } else if ctx.accounts.dest_mint.key() == ctx.accounts.state_account.lpusd_mint {
+            user_account.lpusd_amount -= amount;
+            ctx.accounts.state_account.total_deposited_lpusd -= amount;
+        } else if ctx.accounts.dest_mint.key() == ctx.accounts.state_account.lpsol_mint {
+            user_account.lpsol_amount -= amount;
+            ctx.accounts.state_account.total_deposited_lpsol -= amount;
+        } else if ctx.accounts.dest_mint.key() == ctx.accounts.state_account.msol_mint {
+            user_account.msol_amount -= amount;
+            ctx.accounts.state_account.total_deposited_msol -= amount;
+        } else if ctx.accounts.dest_mint.key() == ctx.accounts.state_account.btc_mint {
+            user_account.btc_amount -= amount;
+            ctx.accounts.state_account.total_deposited_btc -= amount;
+        }
+
         Ok(())
     }
 
@@ -564,6 +660,8 @@ pub mod cbs_protocol {
             let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
             token::transfer(cpi_ctx, amount)?;
 
+            user_account.borrowed_lpusd = user_account.borrowed_lpusd - amount;
+            state_account.total_borrowed_lpusd = state_account.total_borrowed_lpusd - amount;  
         } else if ctx.accounts.user_dest.mint == state_account.lpusd_mint {
 
             let cpi_ctx = CpiContext::new(
