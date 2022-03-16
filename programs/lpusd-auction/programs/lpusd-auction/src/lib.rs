@@ -344,7 +344,7 @@ pub mod lpusd_auction {
         Ok(())
     }
 
-    pub fn withdraw_lpusd(
+    pub fn withdraw_lpusd(        
         ctx: Context<WithdrawLpUSD>
     ) -> Result<()> {
         // NOTE: check if able to withdraw

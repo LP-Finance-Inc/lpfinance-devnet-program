@@ -12,6 +12,10 @@ const LP_TOKEN_DECIMALS: u8 = 9;
 const LTV:u128 = 85;
 const DOMINATOR:u128 = 100;
 
+// pub fn get_price(pyth_account: AccountInfo) -> u64 {
+//     return 64;
+// }
+
 #[program]
 pub mod cbs_protocol {
     use super::*;
@@ -344,6 +348,394 @@ pub mod cbs_protocol {
         
         Ok(())
     }
+
+
+    pub fn withdraw_sol(
+        ctx: Context<WithdrawSOL>,
+        amount: u64
+    ) -> Result<()> {
+        let user_account = &mut ctx.accounts.user_account;
+        let sol_amount = user_account.sol_amount as u128;
+        let btc_amount = user_account.btc_amount as u128;
+        let usdc_amount = user_account.usdc_amount as u128;
+        let lpsol_amount = user_account.lpsol_amount as u128;
+        let msol_amount = user_account.msol_amount as u128;
+        let lpusd_amount = user_account.lpusd_amount as u128;
+        let borrowed_lpusd = user_account.borrowed_lpusd as u128;
+        let borrowed_lpsol = user_account.borrowed_lpsol as u128;
+
+        let mut total_price: u128 = 0;
+
+        // BTC price
+        let pyth_price_info = &ctx.accounts.pyth_btc_account;
+        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+        let btc_price = pyth_price.agg.price as u128;     
+        total_price += btc_price * btc_amount;
+
+        // SOL price
+        let pyth_price_info = &ctx.accounts.pyth_sol_account;
+        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+        let sol_price = pyth_price.agg.price as u128;     
+        total_price += sol_price * sol_amount;
+
+        // USDC price
+        let pyth_price_info = &ctx.accounts.pyth_usdc_account;
+        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+        let usdc_price = pyth_price.agg.price as u128;        
+        total_price += usdc_price * usdc_amount;
+
+        // mSOL price
+        let pyth_price_info = &ctx.accounts.pyth_msol_account;
+        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+        let msol_price = pyth_price.agg.price as u128;        
+        total_price += msol_price * msol_amount;
+
+        // LpUSD price
+        let lpusd_price = usdc_price;        
+        total_price += lpusd_price * lpusd_amount;
+
+        // LpSOL price
+        let lpsol_price = sol_price;
+        total_price += lpsol_price * lpsol_amount;
+
+        let mut borrowed_total: u128 = 0;
+        borrowed_total += borrowed_lpsol * lpsol_price;
+        borrowed_total += borrowed_lpusd * lpusd_price;
+
+        if total_price * LTV < borrowed_total * DOMINATOR {
+            return Err(ErrorCode::InvalidAmount.into());
+        }
+        
+        if amount > sol_amount as u64 {
+            return Err(ErrorCode::InvalidAmount.into());
+        }
+        let borrowable_amount = (total_price - borrowed_total * DOMINATOR / LTV) / sol_price;
+        if amount > borrowable_amount as u64{
+            return Err(ErrorCode::InvalidAmount.into());
+        }
+        
+        **ctx.accounts.state_account.to_account_info().try_borrow_mut_lamports()? -= amount;
+        **ctx.accounts.user_authority.try_borrow_mut_lamports()? += amount;
+
+        Ok(())
+    }
+
+    pub fn withdraw_token(
+        ctx: Context<WithdrawToken>,
+        amount: u64
+    ) -> Result<()> {
+        let user_account = &mut ctx.accounts.user_account;
+        let sol_amount = user_account.sol_amount as u128;
+        let btc_amount = user_account.btc_amount as u128;
+        let usdc_amount = user_account.usdc_amount as u128;
+        let lpsol_amount = user_account.lpsol_amount as u128;
+        let msol_amount = user_account.msol_amount as u128;
+        let lpusd_amount = user_account.lpusd_amount as u128;
+        let borrowed_lpusd = user_account.borrowed_lpusd as u128;
+        let borrowed_lpsol = user_account.borrowed_lpsol as u128;
+
+        let mut total_price: u128 = 0;
+
+        // BTC price
+        let pyth_price_info = &ctx.accounts.pyth_btc_account;
+        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+        let btc_price = pyth_price.agg.price as u128;     
+        total_price += btc_price * btc_amount;
+
+        // SOL price
+        let pyth_price_info = &ctx.accounts.pyth_sol_account;
+        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+        let sol_price = pyth_price.agg.price as u128;     
+        total_price += sol_price * sol_amount;
+
+        // USDC price
+        let pyth_price_info = &ctx.accounts.pyth_usdc_account;
+        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+        let usdc_price = pyth_price.agg.price as u128;        
+        total_price += usdc_price * usdc_amount;
+
+        // mSOL price
+        let pyth_price_info = &ctx.accounts.pyth_msol_account;
+        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+
+        let msol_price = pyth_price.agg.price as u128;        
+        total_price += msol_price * msol_amount;
+
+        // LpUSD price
+        let lpusd_price = usdc_price;        
+        total_price += lpusd_price * lpusd_amount;
+
+        // LpSOL price
+        let lpsol_price = sol_price;
+        total_price += lpsol_price * lpsol_amount;
+
+        let mut borrowed_total: u128 = 0;
+        borrowed_total += borrowed_lpsol * lpsol_price;
+        borrowed_total += borrowed_lpusd * lpusd_price;
+
+        if total_price * LTV < borrowed_total * DOMINATOR {
+            return Err(ErrorCode::InvalidAmount.into());
+        }        
+        
+        let mut dest_price:u128;
+        let mut owned_amount:u128;
+        if ctx.accounts.dest_mint.key() == ctx.accounts.state_account.usdc_mint {
+            dest_price = usdc_price;
+            owned_amount = usdc_amount;
+        } else if ctx.accounts.dest_mint.key() == ctx.accounts.state_account.lpusd_mint {
+            dest_price = lpusd_price;
+            owned_amount = lpusd_amount;
+        } else if ctx.accounts.dest_mint.key() == ctx.accounts.state_account.lpsol_mint {
+            dest_price = lpsol_price;
+            owned_amount = lpsol_amount;
+        } else if ctx.accounts.dest_mint.key() == ctx.accounts.state_account.msol_mint {
+            dest_price = msol_price;
+            owned_amount = msol_amount;
+        } else if ctx.accounts.dest_mint.key() == ctx.accounts.state_account.btc_mint {
+            dest_price = btc_price;
+            owned_amount = btc_amount;
+        } else {
+            return Err(ErrorCode::InvalidToken.into());
+        }        
+
+        if amount > owned_amount as u64 {
+            return Err(ErrorCode::InvalidAmount.into());
+        }
+
+        let borrowable_amount = (total_price - borrowed_total * DOMINATOR / LTV) / dest_price;
+        if amount > borrowable_amount as u64{
+            return Err(ErrorCode::InvalidAmount.into());
+        }
+        
+        let seeds = &[
+            ctx.accounts.state_account.protocol_name.as_ref(),
+            &[ctx.accounts.state_account.bumps.state_account],
+        ];
+        let signer = &[&seeds[..]];
+
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.dest_pool.to_account_info(),
+            to: ctx.accounts.user_dest.to_account_info(),
+            authority: ctx.accounts.state_account.to_account_info()
+        };
+
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
+        token::transfer(cpi_ctx, amount)?;
+
+        Ok(())
+    }
+
+    pub fn repay_token(
+        ctx: Context<RepayToken>,
+        amount: u64
+    ) -> Result<()> {
+        if ctx.accounts.user_dest.amount < amount {
+            return Err(ErrorCode::InsufficientAmount.into());
+        }
+
+        let user_account =&mut ctx.accounts.user_account;
+        let state_account = &mut ctx.accounts.state_account;
+
+        if ctx.accounts.user_dest.mint == state_account.usdc_mint {
+
+            let cpi_accounts = Transfer {
+                from: ctx.accounts.user_dest.to_account_info(),
+                to: ctx.accounts.dest_pool.to_account_info(),
+                authority: ctx.accounts.user_authority.to_account_info()
+            };
+    
+            let cpi_program = ctx.accounts.token_program.to_account_info();
+            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            token::transfer(cpi_ctx, amount)?;
+
+        } else if ctx.accounts.user_dest.mint == state_account.lpusd_mint {
+
+            let cpi_ctx = CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                token::Burn {
+                    mint: ctx.accounts.dest_mint.to_account_info(),
+                    to: ctx.accounts.user_dest.to_account_info(),
+                    authority: ctx.accounts.user_authority.to_account_info()
+                }
+            );
+
+            token::burn(cpi_ctx, amount)?;
+
+            user_account.borrowed_lpusd = user_account.borrowed_lpusd - amount;
+            state_account.total_borrowed_lpusd = state_account.total_borrowed_lpusd - amount;            
+        } else if ctx.accounts.user_dest.mint == state_account.lpsol_mint {
+
+            let cpi_ctx = CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                token::Burn {
+                    mint: ctx.accounts.dest_mint.to_account_info(),
+                    to: ctx.accounts.user_dest.to_account_info(),
+                    authority: ctx.accounts.user_authority.to_account_info()
+                }
+            );
+
+            token::burn(cpi_ctx, amount)?;
+
+            user_account.borrowed_lpsol = user_account.borrowed_lpsol - amount;
+            state_account.total_borrowed_lpsol = state_account.total_borrowed_lpsol - amount;            
+        }
+
+        Ok(())
+    }
+
+    pub fn repay_sol(
+        ctx: Context<RepaySOL>,
+        amount: u64
+    ) -> Result<()> {
+        if **ctx.accounts.user_authority.lamports.borrow() < amount {
+            return Err(ErrorCode::InsufficientAmount.into());
+        }
+
+        if amount > ctx.accounts.user_account.borrowed_lpsol || amount == 0 {
+            return Err(ErrorCode::InvalidAmount.into());
+        }
+
+        invoke(
+            &system_instruction::transfer(
+                ctx.accounts.user_authority.key,
+                ctx.accounts.state_account.to_account_info().key,
+                amount
+            ),
+            &[
+                ctx.accounts.user_authority.to_account_info().clone(),
+                ctx.accounts.state_account.to_account_info().clone(),
+                ctx.accounts.system_program.to_account_info().clone()
+            ]
+        )?;
+
+        let user_account = &mut ctx.accounts.user_account;
+        let state_account = &mut ctx.accounts.state_account;
+
+        user_account.borrowed_lpsol = user_account.borrowed_lpsol - amount;
+        state_account.total_borrowed_lpsol = state_account.total_borrowed_lpsol - amount;
+
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+pub struct RepayToken<'info> {
+    #[account(mut)]
+    pub user_authority: Signer<'info>,
+    #[account(mut)]
+    pub user_dest : Box<Account<'info,TokenAccount>>,
+    #[account(mut)]
+    pub dest_mint: Account<'info,Mint>,
+    // state account for user's wallet
+    #[account(mut,
+        seeds = [state_account.protocol_name.as_ref()],
+        bump= state_account.bumps.state_account
+    )]
+    pub state_account: Box<Account<'info, StateAccount>>,
+    #[account(mut)]
+    pub dest_pool: Box<Account<'info, TokenAccount>>,
+    #[account(
+        mut,
+        constraint = user_account.owner == user_authority.key()
+    )]
+    pub user_account: Box<Account<'info, UserAccount>>,
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>
+}
+
+#[derive(Accounts)]
+pub struct RepaySOL<'info> {
+    #[account(mut)]
+    pub user_authority: Signer<'info>,
+    #[account(mut,
+        seeds = [state_account.protocol_name.as_ref()],
+        bump= state_account.bumps.state_account
+    )]
+    pub state_account: Box<Account<'info, StateAccount>>,
+    // state account for user's wallet
+    #[account(
+        mut,
+        constraint = user_account.owner == user_authority.key()
+    )]
+    pub user_account: Box<Account<'info, UserAccount>>,
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>
+}
+
+#[derive(Accounts)]
+pub struct WithdrawSOL<'info> {
+    #[account(mut)]
+    pub user_authority: Signer<'info>,
+    #[account(mut,
+        seeds = [state_account.protocol_name.as_ref()],
+        bump= state_account.bumps.state_account
+    )]
+    pub state_account: Box<Account<'info, StateAccount>>,
+    // state account for user's wallet
+    #[account(
+        mut,
+        constraint = user_account.owner == user_authority.key()
+    )]
+    pub user_account: Box<Account<'info, UserAccount>>,
+    pub pyth_btc_account: AccountInfo<'info>,
+    pub pyth_usdc_account: AccountInfo<'info>,
+    pub pyth_sol_account: AccountInfo<'info>,
+    pub pyth_msol_account: AccountInfo<'info>,
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>
+}
+
+#[derive(Accounts)]
+pub struct WithdrawToken<'info> {
+    #[account(mut)]
+    pub user_authority: Signer<'info>,
+    // state account for user's wallet
+    #[account(
+        mut,
+        constraint = user_account.owner == user_authority.key()
+    )]
+    pub user_account: Box<Account<'info, UserAccount>>,
+    #[account(mut,
+        seeds = [state_account.protocol_name.as_ref()],
+        bump= state_account.bumps.state_account
+    )]
+    pub state_account: Box<Account<'info, StateAccount>>,
+    #[account(mut)]
+    pub user_dest : Box<Account<'info,TokenAccount>>,
+    #[account(mut)]
+    pub dest_pool: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub dest_mint: Account<'info,Mint>,
+    pub pyth_btc_account: AccountInfo<'info>,
+    pub pyth_usdc_account: AccountInfo<'info>,
+    pub pyth_sol_account: AccountInfo<'info>,
+    pub pyth_msol_account: AccountInfo<'info>,
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>
 }
 
 #[derive(Accounts)]
@@ -661,5 +1053,7 @@ pub enum ErrorCode {
     #[msg("Borrow Exceed")]
     BorrowExceed,
     #[msg("Invalid Amount")]
-    InvalidAmount
+    InvalidAmount,
+    #[msg("Invalid Token")]
+    InvalidToken
 }
