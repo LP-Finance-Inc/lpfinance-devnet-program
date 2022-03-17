@@ -12,84 +12,6 @@ const LP_TOKEN_DECIMALS: u8 = 9;
 const LTV:u128 = 85;
 const DOMINATOR:u128 = 100;
 
-pub fn get_price(
-    // state_account: UserAccount,
-    user_account: UserAccount,
-    // pyth_btc_account: AccountInfo,
-    // pyth_usdc_account: AccountInfo,
-    // pyth_sol_account: AccountInfo,
-    // pyth_msol_account: AccountInfo
-) -> u64 {
-    let sol_amount = user_account.sol_amount;
-
-    // let sol_amount = user_account.sol_amount as u128;
-    // let btc_amount = user_account.btc_amount as u128;
-    // let usdc_amount = user_account.usdc_amount as u128;
-    // let lpsol_amount = user_account.lpsol_amount as u128;
-    // let msol_amount = user_account.msol_amount as u128;
-    // let lpusd_amount = user_account.lpusd_amount as u128;
-    // let borrowed_lpusd = user_account.borrowed_lpusd as u128;
-    // let borrowed_lpsol = user_account.borrowed_lpsol as u128;
-    return sol_amount;
-    // let mut total_price: u128 = 0;
-
-    // // BTC price
-    // let pyth_price_info = &ctx.accounts.pyth_btc_account;
-    // let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-    // let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-    // let btc_price = pyth_price.agg.price as u128;     
-    // total_price += btc_price * btc_amount;
-
-    // // SOL price
-    // let pyth_price_info = &ctx.accounts.pyth_sol_account;
-    // let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-    // let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-    // let sol_price = pyth_price.agg.price as u128;     
-    // total_price += sol_price * sol_amount;
-
-    // // USDC price
-    // let pyth_price_info = &ctx.accounts.pyth_usdc_account;
-    // let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-    // let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-    // let usdc_price = pyth_price.agg.price as u128;        
-    // total_price += usdc_price * usdc_amount;
-
-    // // mSOL price
-    // let pyth_price_info = &ctx.accounts.pyth_msol_account;
-    // let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-    // let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-    // let msol_price = pyth_price.agg.price as u128;        
-    // total_price += msol_price * msol_amount;
-
-    // // LpUSD price
-    // let lpusd_price = usdc_price;        
-    // total_price += lpusd_price * lpusd_amount;
-
-    // // LpSOL price
-    // let lpsol_price = sol_price;
-    // total_price += lpsol_price * lpsol_amount;
-
-    // let mut borrowed_total: u128 = 0;
-    // borrowed_total += borrowed_lpsol * lpsol_price;
-    // borrowed_total += borrowed_lpusd * lpusd_price;
-
-    // if total_price * LTV < borrowed_total * DOMINATOR {
-    //     return Err(ErrorCode::InvalidAmount.into());
-    // }
-    
-    // if amount > sol_amount as u64 {
-    //     return Err(ErrorCode::InvalidAmount.into());
-    // }
-    // let borrowable_amount = (total_price - borrowed_total * DOMINATOR / LTV) / sol_price;
-    // if amount > borrowable_amount as u64{
-    //     return Err(ErrorCode::InvalidAmount.into());
-    // }
-}
-
 #[program]
 pub mod cbs_protocol {
     use super::*;
@@ -344,6 +266,8 @@ pub mod cbs_protocol {
     pub fn liquidate_collateral(
         ctx: Context<LiquidateCollateral>
     ) -> Result<()> {
+        msg!("liquidate_collateral started");
+
         let user_account = &mut ctx.accounts.user_account;
 
         let lpusd_amount = user_account.lpusd_amount;
@@ -357,6 +281,7 @@ pub mod cbs_protocol {
             &[ctx.accounts.state_account.bumps.state_account],
         ];
         let signer = &[&seeds[..]];
+        msg!("Lpusd amount: !!{:?}!!", lpusd_amount.to_string());
 
         if lpusd_amount > 0 {
             let cpi_accounts = Transfer {
@@ -405,11 +330,13 @@ pub mod cbs_protocol {
             let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
             token::transfer(cpi_ctx, usdc_amount)?;
         }
+        msg!("sol_amount started");
 
         if sol_amount > 0 {
             **ctx.accounts.state_account.to_account_info().try_borrow_mut_lamports()? -= sol_amount;
             **ctx.accounts.auction_account.try_borrow_mut_lamports()? += sol_amount;
         }
+        msg!("sol_amount ended");
 
         user_account.lpusd_amount = 0;
         user_account.lpsol_amount = 0;
@@ -1061,27 +988,27 @@ pub struct InitUserAccount<'info> {
 #[derive(Accounts)]
 pub struct LiquidateCollateral<'info> {
     #[account(mut)]
-    pub user_account: Account<'info, UserAccount>,
+    pub user_account: Box<Account<'info, UserAccount>>,
     #[account(mut)]
-    pub state_account: Account<'info, StateAccount>,
+    pub state_account: Box<Account<'info, StateAccount>>,
     #[account(mut)]
     pub auction_account: AccountInfo<'info>,
     #[account(mut)]
-    pub auction_lpusd: Account<'info, TokenAccount>,
+    pub auction_lpusd: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub auction_lpsol: Account<'info, TokenAccount>,
+    pub auction_lpsol: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub auction_btc: Account<'info, TokenAccount>,
+    pub auction_btc: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub auction_usdc: Account<'info, TokenAccount>,
+    pub auction_usdc: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub cbs_lpusd: Account<'info, TokenAccount>,
+    pub cbs_lpusd: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub cbs_lpsol: Account<'info, TokenAccount>,
+    pub cbs_lpsol: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub cbs_btc: Account<'info, TokenAccount>,
+    pub cbs_btc: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub cbs_usdc: Account<'info, TokenAccount>,
+    pub cbs_usdc: Box<Account<'info, TokenAccount>>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
