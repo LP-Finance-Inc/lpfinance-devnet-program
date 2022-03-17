@@ -386,7 +386,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -408,7 +413,7 @@
             "type": "u8"
           },
           {
-            "name": "discountReward",
+            "name": "tempAmount",
             "type": "u64"
           }
         ]
@@ -479,35 +484,27 @@
             "type": "publicKey"
           },
           {
-            "name": "lpusdAmount",
+            "name": "totalDepositedLpusd",
             "type": "u64"
           },
           {
-            "name": "lpsolAmount",
+            "name": "totalLpusd",
             "type": "u64"
           },
           {
-            "name": "solAmount",
+            "name": "totalPercent",
             "type": "u64"
           },
           {
-            "name": "btcAmount",
+            "name": "epochDuration",
             "type": "u64"
           },
           {
-            "name": "usdcAmount",
+            "name": "lastEpochPercent",
             "type": "u64"
           },
           {
-            "name": "msolAmount",
-            "type": "u64"
-          },
-          {
-            "name": "rewardPercent",
-            "type": "u64"
-          },
-          {
-            "name": "rewardDenominator",
+            "name": "lastEpochProfit",
             "type": "u64"
           }
         ]
@@ -560,6 +557,9 @@
           },
           {
             "name": "InvalidAmount"
+          },
+          {
+            "name": "ExceedAmount"
           }
         ]
       }

@@ -266,6 +266,8 @@ pub mod cbs_protocol {
     pub fn liquidate_collateral(
         ctx: Context<LiquidateCollateral>
     ) -> Result<()> {
+        msg!("liquidate_collateral started");
+
         let user_account = &mut ctx.accounts.user_account;
 
         let lpusd_amount = user_account.lpusd_amount;
@@ -279,6 +281,7 @@ pub mod cbs_protocol {
             &[ctx.accounts.state_account.bumps.state_account],
         ];
         let signer = &[&seeds[..]];
+        msg!("Lpusd amount: !!{:?}!!", lpusd_amount.to_string());
 
         if lpusd_amount > 0 {
             let cpi_accounts = Transfer {
@@ -327,11 +330,13 @@ pub mod cbs_protocol {
             let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
             token::transfer(cpi_ctx, usdc_amount)?;
         }
+        msg!("sol_amount started");
 
         if sol_amount > 0 {
             **ctx.accounts.state_account.to_account_info().try_borrow_mut_lamports()? -= sol_amount;
             **ctx.accounts.auction_account.try_borrow_mut_lamports()? += sol_amount;
         }
+        msg!("sol_amount ended");
 
         user_account.lpusd_amount = 0;
         user_account.lpsol_amount = 0;
@@ -983,27 +988,27 @@ pub struct InitUserAccount<'info> {
 #[derive(Accounts)]
 pub struct LiquidateCollateral<'info> {
     #[account(mut)]
-    pub user_account: Account<'info, UserAccount>,
+    pub user_account: Box<Account<'info, UserAccount>>,
     #[account(mut)]
-    pub state_account: Account<'info, StateAccount>,
+    pub state_account: Box<Account<'info, StateAccount>>,
     #[account(mut)]
     pub auction_account: AccountInfo<'info>,
     #[account(mut)]
-    pub auction_lpusd: Account<'info, TokenAccount>,
+    pub auction_lpusd: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub auction_lpsol: Account<'info, TokenAccount>,
+    pub auction_lpsol: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub auction_btc: Account<'info, TokenAccount>,
+    pub auction_btc: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub auction_usdc: Account<'info, TokenAccount>,
+    pub auction_usdc: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub cbs_lpusd: Account<'info, TokenAccount>,
+    pub cbs_lpusd: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub cbs_lpsol: Account<'info, TokenAccount>,
+    pub cbs_lpsol: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub cbs_btc: Account<'info, TokenAccount>,
+    pub cbs_btc: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
-    pub cbs_usdc: Account<'info, TokenAccount>,
+    pub cbs_usdc: Box<Account<'info, TokenAccount>>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
