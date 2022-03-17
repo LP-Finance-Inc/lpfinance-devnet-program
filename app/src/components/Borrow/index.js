@@ -696,40 +696,12 @@ export const BorrowComponent = () => {
         }
     }
 
-    const getUser = async () => {
-        try {
-            const userAuthority = wallet.publicKey;
-            const provider = await getProvider();
-            anchor.setProvider(provider);
-            // address of deployed program
-            const programId = new PublicKey(idl.metadata.address);    
-            // Generate the program client from IDL.
-            const program = new anchor.Program(idl, programId);
-            
-            const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
-                // [Buffer.from(cbs_name), Buffer.from(seed0), Buffer.from(seed1)],
-                [Buffer.from(cbs_name), Buffer.from(userAuthority.toBuffer())],
-                program.programId
-            );
-
-            try {
-                
-                const result = await program.rpc.getPrice(userAccount)
-                console.log(result)
-            } catch (err) {
-                console.log(err);
-            }
-        } catch (err) {
-            console.log(err);
-        }
-    }
     return (
         <div>  
             <h2>1) CBS protocol</h2>
             <div>
                 SOL price:
             </div>
-            <button onClick={getUser}>getUser</button>
             <div>{ solPrice }</div>
             <div>
                 <p>Please enter the amount of token to deposit</p>
