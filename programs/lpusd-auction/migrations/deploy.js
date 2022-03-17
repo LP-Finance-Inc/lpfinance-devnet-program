@@ -11,7 +11,7 @@ const idl = require("../target/idl/lpusd_auction.json");
 const programID = idl.metadata.address;
 
 console.log("ProgramID", programID);
-const auction_name = "auction_02";
+const auction_name = "auction_03";
 const pool_usdc = "pool_usdc";
 const pool_btc = "pool_btc";
 const pool_lpsol = "pool_lpsol";
@@ -122,6 +122,22 @@ module.exports = async function (provider) {
   }
 }
 
+// 2022-03-17
+// ProgramID 6KS4ho2CDvr7MGofHU6F6WJfQ5j6DL8nhBWJtkhMTzqt
+// State-Account: kr6SYFJZvfVmFWg4gJPW7Qm4Q2jBANT5NLTieFq6EHK
+// Pool-USDC: 4MroHBr3m4zEsRKNGCCockwPSkqJacKoVLMknELWgSyi
+// Pool-BTC: 5eQBRPJtYAc29wQJtpWAhFCUsFwDZs2QdbahdZRC4CJT
+// Pool-mSOL: AEQagn3g3xqoatAuSxfMtnDU7qehsv1etyUTo6HFxFkx
+// Pool-LpSOL: 8XKjY2QVfnZrZAdBrycVSTgDQP9KujoQDowvdRpKFvzc
+// Pool-LpUSD: Ddk2z7KBieLv5vyadEGBwm7M2bqeSGRGpVCuSZmxCWtT
+// Bumps {
+//   stateAccount: 253,
+//   poolUsdc: 255,
+//   poolBtc: 255,
+//   poolLpsol: 255,
+//   poolLpusd: 254,
+//   poolMsol: 254
+// }
 
 // 2022-03-11 env
 // ProgramID 6KS4ho2CDvr7MGofHU6F6WJfQ5j6DL8nhBWJtkhMTzqt
