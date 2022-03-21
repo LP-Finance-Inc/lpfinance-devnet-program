@@ -226,22 +226,22 @@
         },
         {
           "name": "swapLpusd",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "swapLpsol",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "swapBtc",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "swapUsdc",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -266,42 +266,42 @@
         },
         {
           "name": "auctionLpusd",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "auctionLpsol",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "auctionBtc",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "auctionUsdc",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "cbsLpusd",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "cbsLpsol",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "cbsUsdc",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "cbsBtc",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {

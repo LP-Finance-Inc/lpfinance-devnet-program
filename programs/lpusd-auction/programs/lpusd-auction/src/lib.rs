@@ -529,9 +529,13 @@ pub struct Liquidate<'info> {
     pub cbs_account: Box<Account<'info, StateAccount>>,
     pub cbs_program: Program<'info, CbsProtocol>,
     pub swap_program: Program<'info, LpfinanceSwap>,
+    #[account(mut)]
     pub swap_lpusd: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
     pub swap_lpsol: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
     pub swap_btc: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
     pub swap_usdc: Box<Account<'info, TokenAccount>>,
 
     #[account(mut)]
@@ -543,13 +547,21 @@ pub struct Liquidate<'info> {
     #[account(mut)]
     pub lpusd_mint: Box<Account<'info,Mint>>,
 
+    #[account(mut)]
     pub auction_lpusd: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
     pub auction_lpsol: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
     pub auction_btc: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
     pub auction_usdc: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
     pub cbs_lpusd: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
     pub cbs_lpsol: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
     pub cbs_usdc: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
     pub cbs_btc: Box<Account<'info, TokenAccount>>,
     // pyth
     pub pyth_btc_account: AccountInfo<'info>,
