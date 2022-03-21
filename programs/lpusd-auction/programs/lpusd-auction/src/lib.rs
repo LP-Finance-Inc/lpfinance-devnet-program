@@ -13,7 +13,7 @@ use lpfinance_swap::{self};
 
 declare_id!("6KS4ho2CDvr7MGofHU6F6WJfQ5j6DL8nhBWJtkhMTzqt");
 
-const DENOMINATOR:u64 = 10000;
+const DENOMINATOR:u64 = 100;
 
 #[program]
 pub mod lpusd_auction {
@@ -136,6 +136,7 @@ pub mod lpusd_auction {
         ];
         let signer = &[&seeds[..]];
 
+        msg!("Started Transfer");
         // Transfer lpusd from auction to cbs
         let cpi_accounts = Transfer {
             from: ctx.accounts.auction_lpusd.to_account_info(),
@@ -147,6 +148,7 @@ pub mod lpusd_auction {
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
         token::transfer(cpi_ctx, borrowed_lpusd)?;
 
+        msg!("Ended liquidate");
 
         // Transfer all collaterals from cbs to auction
         {
@@ -352,12 +354,13 @@ pub mod lpusd_auction {
         let state_account = &mut ctx.accounts.state_account;
 
         let total_withdrawable_amount = user_account.lpusd_amount * state_account.total_percent / DENOMINATOR;
-
-        if ctx.accounts.pool_lpusd.amount < total_withdrawable_amount {
+        msg!("Total withdraw amount: !!{:?}!!", total_withdrawable_amount.to_string());
+        msg!("pool_lpusd amount: !!{:?}!!", ctx.accounts.pool_lpusd.amount.to_string());
+        if ctx.accounts.pool_lpusd.amount < amount {
             return Err(ErrorCode::InsufficientPoolAmount.into());
         }
 
-        if amount < total_withdrawable_amount {
+        if amount > total_withdrawable_amount {
             return Err(ErrorCode::ExceedAmount.into());
         }
 
@@ -515,7 +518,9 @@ pub struct DepositLpUSD<'info> {
 pub struct Liquidate<'info> {
     #[account(mut)]
     pub user_authority: Signer<'info>,
-    #[account(mut)]
+    #[account(mut,
+        seeds = [auction_account.auction_name.as_ref()],
+        bump = auction_account.bumps.state_account)]
     pub auction_account: Box<Account<'info, AuctionStateAccount>>,
     // UserAccount from CBS protocol
     #[account(mut)]
