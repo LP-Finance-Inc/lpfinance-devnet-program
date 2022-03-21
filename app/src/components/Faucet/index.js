@@ -35,14 +35,15 @@ export const Faucet = () => {
     
     const getInfo = async () => {
         try {
+            console.log("Get Info started");
             // Get the balance of pool tokens
             const btcBalance = await getBalance(publicKey, btcMint);
             const usdcBalance = await getBalance(publicKey, usdcMint);
             const solBalance = await getSOLBalance(publicKey);
             
-            console.log("Swap SOL balance:", solBalance);
-            console.log("Swap Btc balance:", btcBalance)
-            console.log("Swap USDC balance:", usdcBalance)         
+            console.log("My Account SOL balance:", solBalance);
+            console.log("My Account Btc balance:", btcBalance)
+            console.log("My Account USDC balance:", usdcBalance)         
         } catch (err) {
             console.log(err);
         }
@@ -100,6 +101,7 @@ export const Faucet = () => {
             
                 await connection.confirmTransaction(airdropSignature);
                 console.log("1 SOL transferred to your account")
+                await getInfo();
             } catch (err) {
                 console.log(err);
             }
