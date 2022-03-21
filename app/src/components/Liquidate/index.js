@@ -46,15 +46,15 @@ export const Liqudate = () => {
             const accountData = await readAuctionUserAccount(provider, publicKey);
             if (!accountData) return;
             console.log("Account Data:", accountData);
-            console.log("Deposited LpUSD:", convert_from_wei(accountData.lpusdAmount.toString())); // 100 Lpusd
-            console.log("Discount Reward:", convert_from_wei(accountData.discountReward.toString()));
+            console.log("Auction Deposited LpUSD:", convert_from_wei(accountData.lpusdAmount.toString())); // 100 Lpusd
+            console.log("Auction Discount Reward:", convert_from_wei(accountData.tempAmount.toString()));
 
             // Get info from cbs program's state account
             const programData = await readAuctionStateAccount(provider, stateAccount);
             console.log("Program Data:", programData);
 
-            console.log("Reward Percent:", programData.rewardPercent.toString()); // 110 %  110 Lpusd
-            console.log("Auction Total deposited LpUSD:", convert_from_wei(programData.lpusdAmount.toString()));
+            console.log("Reward Percent:", programData.totalPercent.toString()); // 110 %  110 Lpusd
+            console.log("Auction Total deposited LpUSD:", convert_from_wei(programData.totalLpusd.toString()));
         } catch (err) {
             console.log(err);
         }
@@ -192,7 +192,11 @@ export const Liqudate = () => {
         )
         
         try {
-            await program.rpc.withdrawLpusd({
+            const deposit_wei = convert_to_wei(depositAmount);
+            const deposit_amount = new anchor.BN(deposit_wei); // '100000000'
+            console.log("Deposit Amount:", deposit_amount.toString())
+
+            await program.rpc.withdrawLpusd(deposit_amount, {
                 accounts: {
                     userAuthority,
                     userLpusd,
@@ -305,9 +309,9 @@ export const Liqudate = () => {
                 <button onClick={ withdraw_lpusd } >
                     Withdraw
                 </button>
-                {/* <button onClick={ liquidate } >
+                <button onClick={ liquidate } >
                     Liquidate
-                </button> */}
+                </button>
             </div>
             <hr/>
         </div>

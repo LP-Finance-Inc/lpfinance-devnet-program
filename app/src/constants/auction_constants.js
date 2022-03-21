@@ -1,7 +1,7 @@
 import * as anchor from '@project-serum/anchor';
 const { PublicKey } = anchor.web3;
 
-export const auction_name = "auction_02";
+export const auction_name = "auction_03";
 
 
 export const bumps = {
