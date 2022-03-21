@@ -275,6 +275,7 @@ pub mod cbs_protocol {
         let usdc_amount = user_account.usdc_amount;
         let btc_amount = user_account.btc_amount;
         let sol_amount = user_account.sol_amount;
+        let msol_amount = user_account.msol_amount;
 
         let seeds = &[
             ctx.accounts.state_account.protocol_name.as_ref(),
@@ -305,6 +306,18 @@ pub mod cbs_protocol {
             let cpi_program = ctx.accounts.token_program.to_account_info();
             let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
             token::transfer(cpi_ctx, lpsol_amount)?;
+        }
+
+        if msol_amount > 0 {
+            let cpi_accounts = Transfer {
+                from: ctx.accounts.cbs_msol.to_account_info(),
+                to: ctx.accounts.auction_msol.to_account_info(),
+                authority: ctx.accounts.state_account.to_account_info()
+            };
+    
+            let cpi_program = ctx.accounts.token_program.to_account_info();
+            let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
+            token::transfer(cpi_ctx, msol_amount)?;
         }
 
         if btc_amount > 0 {
@@ -343,6 +356,7 @@ pub mod cbs_protocol {
         user_account.usdc_amount = 0;
         user_account.btc_amount = 0;
         user_account.sol_amount = 0;
+        user_account.msol_amount = 0;
 
         user_account.borrowed_lpusd = 0;
         user_account.borrowed_lpsol = 0;
@@ -998,6 +1012,8 @@ pub struct LiquidateCollateral<'info> {
     #[account(mut)]
     pub auction_lpsol: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
+    pub auction_msol: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
     pub auction_btc: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub auction_usdc: Box<Account<'info, TokenAccount>>,
@@ -1005,6 +1021,8 @@ pub struct LiquidateCollateral<'info> {
     pub cbs_lpusd: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub cbs_lpsol: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub cbs_msol: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub cbs_btc: Box<Account<'info, TokenAccount>>,
     #[account(mut)]

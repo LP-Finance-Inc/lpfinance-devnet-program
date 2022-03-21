@@ -369,6 +369,11 @@
           "isSigner": false
         },
         {
+          "name": "auctionMsol",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "auctionBtc",
           "isMut": true,
           "isSigner": false
@@ -385,6 +390,11 @@
         },
         {
           "name": "cbsLpsol",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "cbsMsol",
           "isMut": true,
           "isSigner": false
         },

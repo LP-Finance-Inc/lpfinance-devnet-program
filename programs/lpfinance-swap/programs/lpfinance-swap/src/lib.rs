@@ -171,7 +171,6 @@ pub mod lpfinance_swap {
             return Err(ErrorCode::InsufficientAmount.into());
         }
 
-
         let pyth_price_info = &ctx.accounts.pyth_quote_account;
         let pyth_price_data = &pyth_price_info.try_borrow_data()?;
         let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
@@ -222,6 +221,56 @@ pub mod lpfinance_swap {
 
         Ok(())
     }
+
+    pub fn liquidate_token(
+        ctx: Context<LiquidateToken>,
+        amount: u64
+    ) -> Result<()> {
+        let seeds = &[
+            ctx.accounts.state_account.swap_name.as_ref(),
+            &[ctx.accounts.state_account.bumps.state_account],
+        ];
+        let signer = &[&seeds[..]];
+
+        let cpi_accounts = Transfer {
+            from: ctx.accounts.swap_pool.to_account_info(),
+            to: ctx.accounts.auction_pool.to_account_info(),
+            authority: ctx.accounts.state_account.to_account_info()
+        };
+
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
+        token::transfer(cpi_ctx, amount)?;
+
+        Ok(())
+    }
+}
+
+
+#[derive(Accounts)]
+pub struct LiquidateToken<'info>{
+    #[account(mut,
+        seeds = [state_account.swap_name.as_ref()],
+        bump= state_account.bumps.state_account
+    )]
+    pub state_account: Box<Account<'info, StateAccount>>,
+    #[account(
+        mut,
+        constraint = auction_pool.mint == dest_mint.key()
+    )]
+    pub auction_pool : Box<Account<'info, TokenAccount>>,
+    #[account(
+        mut,
+        constraint = swap_pool.owner == state_account.key(),
+        constraint = swap_pool.mint == dest_mint.key()
+    )]
+    pub swap_pool : Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub dest_mint: Account<'info,Mint>,
+    // Programs and Sysvars
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>
 }
 
 #[derive(Accounts)]
@@ -370,7 +419,6 @@ pub struct SwapTokenToSOL<'info> {
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>
 }
-
 
 #[derive(Accounts)]
 pub struct SwapTokenToToken<'info> {

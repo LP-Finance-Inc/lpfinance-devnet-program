@@ -301,6 +301,52 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "liquidateToken",
+      "accounts": [
+        {
+          "name": "stateAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "auctionPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "swapPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "destMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [

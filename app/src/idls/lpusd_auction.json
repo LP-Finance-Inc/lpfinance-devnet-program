@@ -215,6 +215,11 @@
           "isSigner": false
         },
         {
+          "name": "swapAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "cbsProgram",
           "isMut": false,
           "isSigner": false
@@ -245,17 +250,7 @@
           "isSigner": false
         },
         {
-          "name": "btcMint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "usdcMint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "lpsolMint",
+          "name": "swapMsol",
           "isMut": true,
           "isSigner": false
         },
@@ -285,12 +280,22 @@
           "isSigner": false
         },
         {
+          "name": "auctionMsol",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "cbsLpusd",
           "isMut": true,
           "isSigner": false
         },
         {
           "name": "cbsLpsol",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "cbsMsol",
           "isMut": true,
           "isSigner": false
         },
@@ -316,6 +321,11 @@
         },
         {
           "name": "pythSolAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "pythMsolAccount",
           "isMut": false,
           "isSigner": false
         },
