@@ -1,6 +1,7 @@
 import * as anchor from '@project-serum/anchor';
 import idl from '../idls/cbs_protocol.json';
 import auction_idl from '../idls/lpusd_auction.json';
+import wallet_idl from '../idls/lpfinance_accounts.json';
 
 import { Auction_Constants, CBS_Contants, COMMON_Contants } from '../constants';
 const { PublicKey, Connection } = anchor.web3;
@@ -112,6 +113,24 @@ export const readAuctionUserAccount = async (provider, publicKey) => {
         return accountData;
     } catch (err) {
         console.log(err);
+        return null;
+    }
+}
+
+export const readWalletStateAccount = async (provider, stateAccount) => {
+    try {
+        anchor.setProvider(provider);
+
+        // address of deployed program
+        const programId = new PublicKey(wallet_idl.metadata.address);
+    
+        // Generate the program client from IDL.
+        const program = new anchor.Program(wallet_idl, programId); 
+
+        const accountData = await program.account.stateAccount.fetch(stateAccount);
+        return accountData;
+    } catch (err) {
+        console.log(err)
         return null;
     }
 }

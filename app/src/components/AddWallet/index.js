@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import * as anchor from '@project-serum/anchor';
 import { useWallet } from '@solana/wallet-adapter-react';
-import idl from '../../idls/faucet.json';
-import { ADD_WALLET_Constants } from '../../constants';
+import idl from '../../idls/lpfinance_accounts.json';
+import { ADD_WALLET_Constants, COMMON_Contants } from '../../constants';
+import { readWalletStateAccount } from '../../helpers';
 
 const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
 
@@ -11,8 +12,32 @@ const { stateAccount } = ADD_WALLET_Constants;
 
 export const AddWallet = () => {
     const wallet = useWallet();
-
+    const { publicKey } = wallet;
     const [accountKey, setAccountKey] = useState('');
+
+    useEffect(async () => {
+        if (!publicKey) {
+            return;
+        }
+        await getInfo();
+        // eslint-disable-next-line 
+    }, [publicKey])
+
+    const getInfo = async () => {
+        try {            
+            // Get info from user's state account
+            const provider = await getProvider();
+
+            // Get info from cbs program's state account
+            const programData = await readWalletStateAccount(provider, stateAccount);
+            console.log("Wallet Program Data:", programData);
+            console.log("Wallet List:", programData.accountList);
+        } catch (err) {
+            console.log(err);
+        }
+
+        // ((LEPP - 100) / 100 ) ^ 365 = APY
+    }
 
     // GET provider
     const getProvider = async () => {
@@ -37,7 +62,7 @@ export const AddWallet = () => {
     
     // Enter depositing
     const add_wallet = async () => {
-        const userAuthority = wallet.publicKey;    
+        const authority = wallet.publicKey;    
 
         const provider = await getProvider();
         anchor.setProvider(provider);
@@ -50,7 +75,7 @@ export const AddWallet = () => {
         try {
             await program.rpc.addWallet({
                 accounts: {
-                    userAuthority,
+                    authority,
                     cbsAccount,
                     stateAccount,
                     systemProgram: SystemProgram.programId,
