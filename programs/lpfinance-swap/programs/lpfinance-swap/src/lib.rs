@@ -231,7 +231,7 @@ pub mod lpfinance_swap {
             &[ctx.accounts.state_account.bumps.state_account],
         ];
         let signer = &[&seeds[..]];
-
+        msg!("Started liqliquidate_token");
         let cpi_accounts = Transfer {
             from: ctx.accounts.swap_pool.to_account_info(),
             to: ctx.accounts.auction_pool.to_account_info(),
