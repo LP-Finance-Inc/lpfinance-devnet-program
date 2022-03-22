@@ -51,7 +51,7 @@ pub mod lpusd_auction {
         state_account.pool_lpusd = ctx.accounts.pool_lpusd.key();
         state_account.pool_msol = ctx.accounts.pool_msol.key();
 
-        state_account.total_percent = 100;
+        state_account.total_percent = 100; // 10000000
         state_account.total_lpusd = 0;
         state_account.epoch_duration = 0;
         state_account.total_deposited_lpusd = 0;
@@ -330,7 +330,7 @@ pub mod lpusd_auction {
         let total_amount = auction_account.total_lpusd + reward as u64;
         let auction_percent = auction_account.total_percent as u128 * total_amount as u128 / auction_account.total_lpusd as u128;
 
-        auction_account.last_epoch_percent = total_amount / auction_account.total_lpusd;
+        auction_account.last_epoch_percent = total_amount * 100 / auction_account.total_lpusd;
         auction_account.last_epoch_profit = reward as u64;
         auction_account.total_lpusd = total_amount;
         auction_account.total_percent = auction_percent as u64;

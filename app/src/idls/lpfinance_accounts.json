@@ -1,0 +1,146 @@
+{
+  "version": "0.1.0",
+  "name": "lpfinance_accounts",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "stateAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "cbsAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "programName",
+          "type": "string"
+        },
+        {
+          "name": "bumps",
+          "type": {
+            "defined": "AccountsBumps"
+          }
+        }
+      ]
+    },
+    {
+      "name": "addWallet",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "cbsAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stateAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "StateAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "programName",
+            "type": {
+              "array": [
+                "u8",
+                10
+              ]
+            }
+          },
+          {
+            "name": "bumps",
+            "type": {
+              "defined": "AccountsBumps"
+            }
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "cbsAccount",
+            "type": "publicKey"
+          },
+          {
+            "name": "accountList",
+            "type": {
+              "vec": "publicKey"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "AccountsBumps",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "stateAccount",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ErrorCode",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "InvalidAmount"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "address": "CaBy6Mh16bVQpnqY7Crt13hU4Zyv8QbW55GfTvVFwxYh"
+  }
+}

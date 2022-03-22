@@ -1,13 +1,13 @@
 import * as anchor from '@project-serum/anchor';
 import { Program } from '@project-serum/anchor';
-import { LpusdAuction } from '../target/types/lpusd_auction';
+import { LpfinanceTokens } from '../target/types/lpfinance_tokens';
 
-describe('lpusd-auction', () => {
+describe('lpfinance-tokens', () => {
 
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.Provider.env());
 
-  const program = anchor.workspace.LpusdAuction as Program<LpusdAuction>;
+  const program = anchor.workspace.LpfinanceTokens as Program<LpfinanceTokens>;
 
   it('Is initialized!', async () => {
     // Add your test here.

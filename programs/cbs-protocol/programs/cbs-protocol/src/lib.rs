@@ -12,6 +12,14 @@ const LP_TOKEN_DECIMALS: u8 = 9;
 const LTV:u128 = 85;
 const DOMINATOR:u128 = 100;
 
+pub fn get_price(pyth_account: AccountInfo) -> Result<u128> {
+    let pyth_price_info = &pyth_account;
+    let pyth_price_data = &pyth_price_info.try_borrow_data()?;
+    let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
+    let price = pyth_price.agg.price as u128;
+    Ok(price)
+}
+
 #[program]
 pub mod cbs_protocol {
     use super::*;
@@ -168,37 +176,20 @@ pub mod cbs_protocol {
         let user_account = &mut ctx.accounts.user_account;
         let state_account = &mut ctx.accounts.state_account;
 
-        // BTC price
-        let pyth_price_info = &ctx.accounts.pyth_btc_account;
-        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-        // let pyth_price = <pyth_client::Price>::try_from(pyth_price_data);
-        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-        
-        let btc_price = pyth_price.agg.price as u128;
+        // BTC price        
+        let btc_price: u128 = get_price(ctx.accounts.pyth_btc_account.to_account_info())?;    
         total_price += btc_price * user_account.btc_amount as u128;
 
         // SOL price
-        let pyth_price_info = &ctx.accounts.pyth_sol_account;
-        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-        let sol_price = pyth_price.agg.price as u128;
+        let sol_price: u128 = get_price(ctx.accounts.pyth_sol_account.to_account_info())?;    
         total_price += sol_price * user_account.sol_amount as u128;
 
         // USDC price
-        let pyth_price_info = &ctx.accounts.pyth_usdc_account;
-        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-        let usdc_price = pyth_price.agg.price as u128;        
+        let usdc_price: u128 = get_price(ctx.accounts.pyth_usdc_account.to_account_info())?;
         total_price += usdc_price * user_account.usdc_amount as u128;
 
         // mSOL price
-        let pyth_price_info = &ctx.accounts.pyth_msol_account;
-        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-        let msol_price = pyth_price.agg.price as u128;        
+        let msol_price: u128 = get_price(ctx.accounts.pyth_msol_account.to_account_info())?;
         total_price += msol_price * user_account.msol_amount as u128;
 
         // LpUSD price
@@ -213,7 +204,7 @@ pub mod cbs_protocol {
         total_borrowed_price += lpsol_price * user_account.borrowed_lpsol as u128;
 
         let mut borrow_value: u128 = amount as u128;
-        msg!("Request amount: !!{:?}!!", amount.to_string());
+        
         if islpusd {
             borrow_value = borrow_value * lpusd_price;
             state_account.total_borrowed_lpusd = state_account.total_borrowed_lpusd + amount;
@@ -222,16 +213,7 @@ pub mod cbs_protocol {
             state_account.total_borrowed_lpsol = state_account.total_borrowed_lpsol + amount;
         }
 
-        msg!("Price SOL: !!{:?}!!", sol_price.to_string());
-        msg!("Price USDC: !!{:?}!!", usdc_price.to_string());
-        msg!("Price BTC: !!{:?}!!", btc_price.to_string());
-        msg!("Price mSOL: !!{:?}!!", msol_price.to_string());
-
-        msg!("Borrow Value: !!{:?}!!", borrow_value.to_string());
-        msg!("Total Value: !!{:?}!!", total_price.to_string());
-        msg!("Total Borrowed Value: !!{:?}!!", total_borrowed_price.to_string());
         let borrable_total = total_price * LTV / DOMINATOR - total_borrowed_price;
-        msg!("Borrowable Total Value: !!{:?}!!", borrable_total.to_string());
 
         if borrable_total > borrow_value {
             // Mint
@@ -382,35 +364,19 @@ pub mod cbs_protocol {
         let mut total_price: u128 = 0;
 
         // BTC price
-        let pyth_price_info = &ctx.accounts.pyth_btc_account;
-        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-        let btc_price = pyth_price.agg.price as u128;     
+        let btc_price: u128 = get_price(ctx.accounts.pyth_btc_account.to_account_info())?;
         total_price += btc_price * btc_amount;
 
         // SOL price
-        let pyth_price_info = &ctx.accounts.pyth_sol_account;
-        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-        let sol_price = pyth_price.agg.price as u128;     
+        let sol_price: u128 = get_price(ctx.accounts.pyth_sol_account.to_account_info())?; 
         total_price += sol_price * sol_amount;
 
         // USDC price
-        let pyth_price_info = &ctx.accounts.pyth_usdc_account;
-        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-        let usdc_price = pyth_price.agg.price as u128;        
+        let usdc_price: u128 = get_price(ctx.accounts.pyth_usdc_account.to_account_info())?;      
         total_price += usdc_price * usdc_amount;
 
         // mSOL price
-        let pyth_price_info = &ctx.accounts.pyth_msol_account;
-        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-        let msol_price = pyth_price.agg.price as u128;        
+        let msol_price: u128 = get_price(ctx.accounts.pyth_msol_account.to_account_info())?;
         total_price += msol_price * msol_amount;
 
         // LpUSD price
@@ -463,35 +429,19 @@ pub mod cbs_protocol {
         let mut total_price: u128 = 0;
 
         // BTC price
-        let pyth_price_info = &ctx.accounts.pyth_btc_account;
-        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-        let btc_price = pyth_price.agg.price as u128;     
+        let btc_price: u128 = get_price(ctx.accounts.pyth_btc_account.to_account_info())?;     
         total_price += btc_price * btc_amount;
 
         // SOL price
-        let pyth_price_info = &ctx.accounts.pyth_sol_account;
-        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-        let sol_price = pyth_price.agg.price as u128;     
+        let sol_price: u128 = get_price(ctx.accounts.pyth_sol_account.to_account_info())?;     
         total_price += sol_price * sol_amount;
 
         // USDC price
-        let pyth_price_info = &ctx.accounts.pyth_usdc_account;
-        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-        let usdc_price = pyth_price.agg.price as u128;        
+        let usdc_price: u128 = get_price(ctx.accounts.pyth_usdc_account.to_account_info())?;     
         total_price += usdc_price * usdc_amount;
 
         // mSOL price
-        let pyth_price_info = &ctx.accounts.pyth_msol_account;
-        let pyth_price_data = &pyth_price_info.try_borrow_data()?;
-        let pyth_price = pyth_client::cast::<pyth_client::Price>(pyth_price_data);
-
-        let msol_price = pyth_price.agg.price as u128;        
+        let msol_price: u128 = get_price(ctx.accounts.pyth_msol_account.to_account_info())?;
         total_price += msol_price * msol_amount;
 
         // LpUSD price
