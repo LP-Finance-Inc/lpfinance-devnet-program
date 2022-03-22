@@ -15,7 +15,7 @@ import {
 } from '../../helpers';
 
 const {
-    lpsolMint, lpusdMint, usdcMint, btcMint, pythBtcAccount, msolMint, pythMsolAccount,
+    lpusdMint, pythBtcAccount, pythMsolAccount,
     pythUsdcAccount, pythSolAccount, NETWORK
 } = COMMON_Contants;
 
@@ -46,18 +46,29 @@ export const Liqudate = () => {
             const accountData = await readAuctionUserAccount(provider, publicKey);
             if (!accountData) return;
             console.log("Account Data:", accountData);
-            console.log("Auction Deposited LpUSD:", convert_from_wei(accountData.lpusdAmount.toString())); // 100 Lpusd
-            console.log("Auction Discount Reward:", convert_from_wei(accountData.tempAmount.toString()));
 
             // Get info from cbs program's state account
             const programData = await readAuctionStateAccount(provider, stateAccount);
             console.log("Program Data:", programData);
 
-            console.log("Reward Percent:", programData.totalPercent.toString()); // 110 %  110 Lpusd
-            console.log("Auction Total deposited LpUSD:", convert_from_wei(programData.totalLpusd.toString()));
+            console.log("Auction Total LpUSD:", convert_from_wei(programData.totalLpusd.toString()));
+            console.log("Total Reward Percent:", programData.totalPercent.toString()); // 110 %  110 Lpusd
+            console.log("Auction Last Epoch Profit Percent:", convert_from_wei(programData.lastEpochPercent.toString())); // return 106 %
+            // APY = ((106 - 100) / 100 ) ^ 365;
+            console.log("Auction Last Epoch Profit Amount:", convert_from_wei(programData.lastEpochProfit.toString())); 
+
+            // User's Balance of LpUSD
+            const userPercent = accountData.totalPercent.toString();
+            const userLpUSDTemp = convert_from_wei(accountData.lpusdAmount.toString());
+            const userLpUSD = userLpUSDTemp * userPercent / 100;
+
+            console.log("Auction User Percent:", accountData.totalPercent.toString());
+            console.log("Auction User Deposited LpUSD:", convert_from_wei(accountData.lpusdAmount.toString())); // 100 Lpusd
         } catch (err) {
             console.log(err);
         }
+
+        // ((LEPP - 100) / 100 ) ^ 365 = APY
     }
     // GET provider
     const getProvider = async () => {
@@ -223,16 +234,20 @@ export const Liqudate = () => {
             const auctionLpsol = poolLpsol;
             const auctionBtc = poolBtc;
             const auctionUsdc = poolUsdc;
+            const auctionMsol = poolMsol;
 
             const cbsLpusd = CBS_Contants.poolLpusd;
             const cbsLpsol = CBS_Contants.poolLpsol;
             const cbsUsdc = CBS_Contants.poolUsdc;
             const cbsBtc = CBS_Contants.poolBtc;
-
+            const cbsMsol = CBS_Contants.poolMsol;
+            
+            const swapAccount = SWAP_Contants.stateAccount;
             const swapLpusd = SWAP_Contants.poolLpusd;
             const swapLpsol = SWAP_Contants.poolLpsol;
             const swapBtc = SWAP_Contants.poolBtc;
             const swapUsdc = SWAP_Contants.poolUsdc;
+            const swapMsol = SWAP_Contants.poolMsol;
 
             const cbsAccount = CBS_Contants.stateAccount;
             const cbsProgram = new PublicKey(cbs_idl.metadata.address);
@@ -262,27 +277,32 @@ export const Liqudate = () => {
                     auctionAccount,
                     liquidator,
                     cbsAccount,
+                    swapAccount,
                     cbsProgram,
                     swapProgram,
                     swapLpusd,
                     swapLpsol,
                     swapBtc,
                     swapUsdc,
-                    btcMint,
-                    usdcMint,
-                    lpsolMint,
+                    swapMsol,
+                    // btcMint,
+                    // usdcMint,
+                    // lpsolMint,
                     lpusdMint,
                     auctionLpusd,
                     auctionLpsol,
                     auctionBtc,
                     auctionUsdc,
+                    auctionMsol,
                     cbsLpusd,
                     cbsLpsol,
+                    cbsMsol,
                     cbsUsdc,
                     cbsBtc,
                     pythBtcAccount,
                     pythUsdcAccount,
                     pythSolAccount,
+                    pythMsolAccount,
                     systemProgram: SystemProgram.programId,
                     tokenProgram: TOKEN_PROGRAM_ID,
                     rent: SYSVAR_RENT_PUBKEY
