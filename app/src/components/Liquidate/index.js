@@ -46,21 +46,29 @@ export const Liqudate = () => {
             const accountData = await readAuctionUserAccount(provider, publicKey);
             if (!accountData) return;
             console.log("Account Data:", accountData);
-            console.log("Auction User Deposited LpUSD:", convert_from_wei(accountData.lpusdAmount.toString())); // 100 Lpusd
-            // console.log("Auction Discount Reward:", convert_from_wei(accountData.tempAmount.toString()));
 
             // Get info from cbs program's state account
             const programData = await readAuctionStateAccount(provider, stateAccount);
             console.log("Program Data:", programData);
 
-            console.log("Total Reward Percent:", programData.totalPercent.toString()); // 110 %  110 Lpusd
             console.log("Auction Total LpUSD:", convert_from_wei(programData.totalLpusd.toString()));
+            console.log("Total Reward Percent:", programData.totalPercent.toString()); // 110 %  110 Lpusd
             console.log("Auction Last Epoch Profit Percent:", convert_from_wei(programData.lastEpochPercent.toString())); // return 106 %
             // APY = ((106 - 100) / 100 ) ^ 365;
             console.log("Auction Last Epoch Profit Amount:", convert_from_wei(programData.lastEpochProfit.toString())); 
+
+            // User's Balance of LpUSD
+            const userPercent = accountData.totalPercent.toString();
+            const userLpUSDTemp = convert_from_wei(accountData.lpusdAmount.toString());
+            const userLpUSD = userLpUSDTemp * userPercent / 100;
+
+            console.log("Auction User Percent:", accountData.totalPercent.toString());
+            console.log("Auction User Deposited LpUSD:", convert_from_wei(accountData.lpusdAmount.toString())); // 100 Lpusd
         } catch (err) {
             console.log(err);
         }
+
+        // ((LEPP - 100) / 100 ) ^ 365 = APY
     }
     // GET provider
     const getProvider = async () => {
