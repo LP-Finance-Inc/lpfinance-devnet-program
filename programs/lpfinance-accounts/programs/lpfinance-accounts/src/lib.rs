@@ -31,7 +31,8 @@ pub mod lpfinance_accounts {
     ) -> Result<()> {
         msg!("ADD WALLET");
 
-        ctx.accounts.state_account.account_list.push(ctx.accounts.cbs_account.key());
+        let account_list = &mut ctx.accounts.state_account.account_list;
+        account_list.push(ctx.accounts.cbs_account.key());
         Ok(())
     }
 }
