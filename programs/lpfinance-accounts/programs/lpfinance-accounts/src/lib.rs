@@ -27,21 +27,23 @@ pub mod lpfinance_accounts {
     }
 
     pub fn add_wallet(
-        ctx: Context<AddWallet>
+        ctx: Context<AddWallet>,
+        new_account: Pubkey
     ) -> Result<()> {
         msg!("ADD WALLET");
-
-        let account_list = &mut ctx.accounts.state_account.account_list;
-        account_list.push(ctx.accounts.cbs_account.key());
+        let state_account = &mut ctx.accounts.state_account;
+        
+        let mut account_list = vec![];
+        account_list.push(new_account);
+        msg!("ADD WALLET2");
+        state_account.account_list = account_list;
+        msg!("ADD WALLET3");        
         Ok(())
     }
 }
 
 #[derive(Accounts)]
 pub struct AddWallet<'info> {
-    #[account(mut)]
-    pub authority: Signer<'info>,
-    pub cbs_account: AccountInfo<'info>,
     // State Accounts
     #[account(mut,
         seeds = [state_account.program_name.as_ref()],

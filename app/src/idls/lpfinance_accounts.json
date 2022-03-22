@@ -48,16 +48,6 @@
       "name": "addWallet",
       "accounts": [
         {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "cbsAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "stateAccount",
           "isMut": true,
           "isSigner": false
@@ -73,7 +63,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "newAccount",
+          "type": "publicKey"
+        }
+      ]
     }
   ],
   "accounts": [
