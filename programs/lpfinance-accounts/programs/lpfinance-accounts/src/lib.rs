@@ -93,8 +93,26 @@ pub mod lpfinance_accounts {
 
         Ok(())
     }
+
+    pub fn update_config(
+        ctx: Context<UpdateConfig>,
+        new_authority: Pubkey
+    ) -> Result<()> {
+        let config_account = &mut ctx.accounts.config;
+        if !config_account.authority.eq(&new_authority){
+            return Err(ErrorCode::AlreadyExist.into());
+        }
+        config_account.authority = new_authority;
+        Ok(())
+    }
 }
 
+#[derive(Accounts)]
+pub struct UpdateConfig<'info> {
+    #[account(mut, has_one = authority)]
+    config: Account<'info, Config>,
+    authority: Signer<'info>
+}
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
