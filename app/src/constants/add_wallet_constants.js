@@ -1,9 +1,5 @@
 import * as anchor from '@project-serum/anchor';
 const { PublicKey } = anchor.web3;
 
-export const accounts_name = "accounts_0";
-
-export const bumps = {
-    stateAccount: 255
-}
-export const stateAccount = new PublicKey("35mSpeCWi9rH1KNMnmhC9i32Mxak8jWEk8YB841g5WAi");
+export const whiteListKey = new PublicKey("Ao8Qj9sn1hPpnYjmXwuFbXbVUYwQ8gHZSmbHk1WjwQYU");
+export const configAccountKey = new PublicKey("7ZLD41LfJHpEBv1hkYve6UyC4RsBQiKt17eZ47Ktj6dm");

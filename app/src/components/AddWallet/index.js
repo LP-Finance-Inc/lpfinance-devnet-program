@@ -8,11 +8,15 @@ import { readWalletStateAccount } from '../../helpers';
 const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
 
 const { NETWORK} = COMMON_Contants;
-const { stateAccount } = ADD_WALLET_Constants;
+const { whiteListKey, configAccountKey } = ADD_WALLET_Constants;
 
 export const AddWallet = () => {
     const wallet = useWallet();
     const { publicKey } = wallet;
+<<<<<<< HEAD
+=======
+
+>>>>>>> f20ecd0783eac8d050980ae30397029e9aa413ec
     const [accountKey, setAccountKey] = useState('');
 
     useEffect(async () => {
@@ -59,6 +63,29 @@ export const AddWallet = () => {
     
         return provider;
     }
+
+    useEffect(() => {
+        getInfo();
+    },[publicKey])
+
+    const getInfo = async() => {
+        try {
+
+            // address of deployed program
+            const programId = new PublicKey(idl.metadata.address);    
+            // Generate the program client from IDL.
+            const program = new anchor.Program(idl, programId);    
+
+            const whiteListData = await program.account.whiteList.fetch(whiteListKey);
+            const configData = await program.account.config.fetch(configAccountKey);
+            const counter = configData.counter.toNumber();
+            for (let i = 0; i < counter; i++) {
+                console.log("Account List: ", whiteListData.addresses[i].toBase58())
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
     
     // Enter depositing
     const add_wallet = async () => {
@@ -71,17 +98,26 @@ export const AddWallet = () => {
         // Generate the program client from IDL.
         const program = new anchor.Program(idl, programId);                
 
-        const cbsAccount = new PublicKey(accountKey);
+        const newWallet = new PublicKey(accountKey);
+        const addys = [];
+        addys.push(newWallet);
         try {
-            await program.rpc.addWallet({
+            await program.rpc.addWhitelistAddresses(addys, {
                 accounts: {
                     authority,
+<<<<<<< HEAD
                     cbsAccount,
                     stateAccount,
                     systemProgram: SystemProgram.programId,
                     rent: SYSVAR_RENT_PUBKEY
+=======
+                    config,
+                    stateAccount
+>>>>>>> f20ecd0783eac8d050980ae30397029e9aa413ec
                 }
             })
+
+            await getInfo();
         } catch (err) {
             console.log(err);
         }

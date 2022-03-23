@@ -5,6 +5,11 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token::{self, Mint, MintTo, Transfer, Token, TokenAccount }
 };
+
+use lpfinance_accounts::cpi::accounts::AddFromCbsProgram;
+use lpfinance_accounts::program::LpfinanceAccounts;
+use lpfinance_accounts::{self, WhiteList, Config};
+
 declare_id!("3YhaNLN3oYUaAXjK9yRqVVNUYhqPsVqB5q9GEJ1vWcTM");
 
 const LP_TOKEN_DECIMALS: u8 = 9;
@@ -156,6 +161,20 @@ pub mod cbs_protocol {
 
         user_account.sol_amount = user_account.sol_amount + amount;
         state_account.total_deposited_sol = state_account.total_deposited_sol + amount;
+
+        let whitelist = ctx.accounts.whitelist.load_mut()?;
+        if whitelist.addresses.contains(&ctx.accounts.user_authority.key()) {
+            msg!("Already Exist");
+        } else {
+            let cpi_program = ctx.accounts.accounts_program.to_account_info();
+            let cpi_accounts = AddFromCbsProgram {
+                config: ctx.accounts.config.to_account_info(),
+                whitelist: ctx.accounts.whitelist.to_account_info(),
+                cbsprogram: ctx.accounts.state_account.to_account_info()
+            };
+            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+            lpfinance_accounts::cpi::add_from_cbs_program(cpi_ctx, ctx.accounts.user_authority.key())?;
+        }
 
         Ok(())
     }
@@ -870,6 +889,9 @@ pub struct DepositSOL<'info> {
         constraint = user_account.owner == user_authority.key()
     )]
     pub user_account: Box<Account<'info, UserAccount>>,
+    pub whitelist: AccountLoader<'info, WhiteList>,
+    pub config: Account<'info, Config>,    
+    pub accounts_program: Program<'info, LpfinanceAccounts>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,

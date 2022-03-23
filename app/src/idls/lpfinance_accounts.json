@@ -11,13 +11,13 @@
           "isSigner": true
         },
         {
-          "name": "stateAccount",
+          "name": "config",
           "isMut": true,
-          "isSigner": false
+          "isSigner": true
         },
         {
-          "name": "cbsAccount",
-          "isMut": false,
+          "name": "whitelist",
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -33,39 +33,61 @@
       ],
       "args": [
         {
-          "name": "programName",
-          "type": "string"
+          "name": "cbsprogram",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "addWhitelistAddresses",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
         },
         {
-          "name": "bumps",
+          "name": "whitelist",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "addresses",
           "type": {
-            "defined": "AccountsBumps"
+            "vec": "publicKey"
           }
         }
       ]
     },
     {
-      "name": "addWallet",
+      "name": "addFromCbsProgram",
       "accounts": [
         {
-          "name": "stateAccount",
+          "name": "config",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "systemProgram",
-          "isMut": false,
+          "name": "whitelist",
+          "isMut": true,
           "isSigner": false
         },
         {
-          "name": "rent",
+          "name": "cbsprogram",
           "isMut": false,
           "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "newAccount",
+          "name": "address",
           "type": "publicKey"
         }
       ]
@@ -73,37 +95,45 @@
   ],
   "accounts": [
     {
-      "name": "StateAccount",
+      "name": "Config",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "programName",
+            "name": "whitelistOn",
+            "type": "bool"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "whitelist",
+            "type": "publicKey"
+          },
+          {
+            "name": "cbsprogram",
+            "type": "publicKey"
+          },
+          {
+            "name": "counter",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WhiteList",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "addresses",
             "type": {
               "array": [
-                "u8",
-                10
+                "publicKey",
+                5000
               ]
-            }
-          },
-          {
-            "name": "bumps",
-            "type": {
-              "defined": "AccountsBumps"
-            }
-          },
-          {
-            "name": "owner",
-            "type": "publicKey"
-          },
-          {
-            "name": "cbsAccount",
-            "type": "publicKey"
-          },
-          {
-            "name": "accountList",
-            "type": {
-              "vec": "publicKey"
             }
           }
         ]
@@ -112,24 +142,21 @@
   ],
   "types": [
     {
-      "name": "AccountsBumps",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "stateAccount",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
       "name": "ErrorCode",
       "type": {
         "kind": "enum",
         "variants": [
           {
             "name": "InvalidAmount"
+          },
+          {
+            "name": "WrongWhiteList"
+          },
+          {
+            "name": "NotEnoughSpace"
+          },
+          {
+            "name": "AlreadyExist"
           }
         ]
       }
