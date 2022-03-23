@@ -54,7 +54,7 @@ export const AddWallet = () => {
             console.log(configData, whiteListData)
             console.log("Owner: ", configData.authority.toBase58())
             const counter = configData.counter;
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < counter; i++) {
                 console.log("Account List: ", whiteListData.addresses[i].toBase58())
             }
         } catch (err) {

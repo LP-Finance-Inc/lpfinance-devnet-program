@@ -5,13 +5,16 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token } from '@solana/sp
 import idl from '../../idls/lpusd_auction.json';
 import cbs_idl from '../../idls/cbs_protocol.json';
 import swap_idl  from '../../idls/lpfinance_swap.json';
+import accounts_idl from '../../idls/lpfinance_accounts.json';
 
-import { CBS_Contants, SWAP_Contants, Auction_Constants, COMMON_Contants } from '../../constants';
+import { CBS_Contants, SWAP_Contants, Auction_Constants, ADD_WALLET_Constants,  COMMON_Contants } from '../../constants';
 import {
     convert_from_wei,
     convert_to_wei,
     readAuctionUserAccount,
-    readAuctionStateAccount
+    readAuctionStateAccount,
+    // CBS accounts
+    readUserAccount
 } from '../../helpers';
 
 const {
@@ -22,6 +25,8 @@ const {
 const {
     poolUsdc, poolMsol, poolBtc, poolLpsol, poolLpusd, auction_name, bumps, stateAccount
 } = Auction_Constants;
+
+const { whiteListKey, configAccountKey } = ADD_WALLET_Constants;
 
 const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
 
@@ -228,6 +233,76 @@ export const Liqudate = () => {
 
     }
     
+    useEffect(() => {
+        getAccountList();
+    }, []);
+
+    const getAccountList = async () => {
+        try {
+            const provider = await getProvider();
+            anchor.setProvider(provider);
+            // address of deployed program
+            const programId = new PublicKey(accounts_idl.metadata.address);    
+            // Generate the program client from IDL.
+            const program = new anchor.Program(accounts_idl, programId); 
+            const whiteListData = await program.account.whiteList.fetch(whiteListKey);
+            const configData = await program.account.config.fetch(configAccountKey);
+            
+            const counter = configData.counter;
+            for (let i = 0; i < counter; i++) {
+                const ltv = await calculate_ltv(provider, whiteListData.addresses[i]);
+                if (ltv) {
+                    console.log("Account List: ", whiteListData?.addresses[i].toBase58())
+                    console.log("Account LTV: ", ltv?.toString())
+
+                }
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+    const calculate_ltv = async (provider, userKey) => {
+        try {
+            const accountData = await readUserAccount(provider, userKey);
+            
+            const borrowedLpsol = convert_from_wei(accountData.borrowedLpsol.toString());
+            const borrowedLpusd = convert_from_wei(accountData.borrowedLpusd.toString());
+
+            const lpsolAmount = convert_from_wei(accountData.lpsolAmount.toString());
+            const lpusdAmount = convert_from_wei(accountData.lpusdAmount.toString());
+            const solAmount = convert_from_wei(accountData.solAmount.toString());
+            const usdcAmount = convert_from_wei(accountData.usdcAmount.toString());
+            const btcAmount = convert_from_wei(accountData.btcAmount.toString());
+            const msolAmount = convert_from_wei(accountData.msolAmount.toString());
+
+            const lpsol_price = 90;
+            const lpusd_price = 1;
+            const sol_price = 90;
+            const usdc_price = 1;
+            const btc_price = 42000;
+            const msol_price = 98;
+
+            let total_deposited = 0; // lpsolAmount
+            total_deposited += lpsolAmount * lpsol_price;
+            total_deposited += lpusdAmount * lpusd_price;
+            total_deposited += solAmount * sol_price;
+            total_deposited += usdcAmount * usdc_price;
+            total_deposited += btcAmount * btc_price;
+            total_deposited += msolAmount * msol_price;
+
+            let total_borrowed = 0;
+            total_borrowed += borrowedLpsol * lpsol_price;
+            total_borrowed += borrowedLpusd * lpusd_price;
+
+            const LTV = total_borrowed / total_deposited * 100;
+            return LTV;
+        } catch (err) {
+            // console.log(err)
+            return null;
+        }
+    }
+
     const liquidate = async () => {
         try {
             const auctionLpusd = poolLpusd;
