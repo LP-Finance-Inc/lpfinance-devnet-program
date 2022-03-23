@@ -58,11 +58,11 @@ export const Liqudate = () => {
             console.log("Auction Last Epoch Profit Amount:", convert_from_wei(programData.lastEpochProfit.toString())); 
 
             // User's Balance of LpUSD
-            const userPercent = accountData.totalPercent.toString();
+            const userPercent = programData.totalPercent.toString();
             const userLpUSDTemp = convert_from_wei(accountData.lpusdAmount.toString());
             const userLpUSD = userLpUSDTemp * userPercent / 100;
 
-            console.log("Auction User Percent:", accountData.totalPercent.toString());
+            console.log("Auction User Percent:", programData.totalPercent.toString());
             console.log("Auction User Deposited LpUSD:", convert_from_wei(accountData.lpusdAmount.toString())); // 100 Lpusd
         } catch (err) {
             console.log(err);

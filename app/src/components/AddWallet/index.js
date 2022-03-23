@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import * as anchor from '@project-serum/anchor';
 import { useWallet } from '@solana/wallet-adapter-react';
-import idl from '../../idls/faucet.json';
-import { ADD_WALLET_Constants } from '../../constants';
+import idl from '../../idls/lpfinance_accounts.json';
+import { ADD_WALLET_Constants, COMMON_Contants } from '../../constants';
 
-const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
+const { PublicKey, Connection } = anchor.web3;
 
 const { NETWORK} = COMMON_Contants;
 const { whiteListKey, configAccountKey } = ADD_WALLET_Constants;
@@ -12,7 +12,6 @@ const { whiteListKey, configAccountKey } = ADD_WALLET_Constants;
 export const AddWallet = () => {
     const wallet = useWallet();
     const { publicKey } = wallet;
-
     const [accountKey, setAccountKey] = useState('');
 
     // GET provider
@@ -43,6 +42,8 @@ export const AddWallet = () => {
     const getInfo = async() => {
         try {
 
+            const provider = await getProvider();
+            anchor.setProvider(provider);
             // address of deployed program
             const programId = new PublicKey(idl.metadata.address);    
             // Generate the program client from IDL.
@@ -50,7 +51,8 @@ export const AddWallet = () => {
 
             const whiteListData = await program.account.whiteList.fetch(whiteListKey);
             const configData = await program.account.config.fetch(configAccountKey);
-            const counter = configData.counter.toNumber();
+            console.log(configData, whiteListData)
+            const counter = configData.counter;
             for (let i = 0; i < counter; i++) {
                 console.log("Account List: ", whiteListData.addresses[i].toBase58())
             }
@@ -77,8 +79,8 @@ export const AddWallet = () => {
             await program.rpc.addWhitelistAddresses(addys, {
                 accounts: {
                     authority,
-                    config,
-                    stateAccount
+                    config: configAccountKey,
+                    whitelist: whiteListKey
                 }
             })
 
