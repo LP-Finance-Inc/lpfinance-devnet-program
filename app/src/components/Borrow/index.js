@@ -3,7 +3,8 @@ import * as anchor from '@project-serum/anchor';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, Token } from '@solana/spl-token'
 import idl from '../../idls/cbs_protocol.json';
-import { CBS_Contants, COMMON_Contants } from '../../constants';
+import accounts_idl from '../../idls/lpfinance_accounts.json';
+import { CBS_Contants, COMMON_Contants, ADD_WALLET_Constants } from '../../constants';
 import {
     convert_from_wei,
     convert_to_wei,
@@ -21,6 +22,10 @@ const {
     lpsolMint, lpusdMint, usdcMint, btcMint, msolMint, pythBtcAccount, 
     pythUsdcAccount, pythSolAccount, NETWORK, pythMsolAccount
 } = COMMON_Contants;
+
+const {
+    configAccountKey, whiteListKey
+} = ADD_WALLET_Constants;
 
 
 const { PublicKey, Connection, SystemProgram, SYSVAR_RENT_PUBKEY } = anchor.web3;
@@ -237,7 +242,7 @@ export const BorrowComponent = () => {
 
         if(accountData && accountData.owner.toBase58() == userAuthority.toBase58()) {
             console.log("Transaction")
-
+            const accountsProgram = new PublicKey(accounts_idl.metadata.address);
             try {
                 // SOL decimal is 9
                 const deposit_wei = convert_to_wei(depositAmount);
@@ -248,6 +253,9 @@ export const BorrowComponent = () => {
                         userAuthority,
                         stateAccount,
                         userAccount,
+                        whitelist: whiteListKey,
+                        config: configAccountKey,
+                        accountsProgram,
                         systemProgram: SystemProgram.programId,
                         tokenProgram: TOKEN_PROGRAM_ID,
                         rent: SYSVAR_RENT_PUBKEY

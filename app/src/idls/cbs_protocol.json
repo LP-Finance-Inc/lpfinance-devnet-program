@@ -194,6 +194,21 @@
           "isSigner": false
         },
         {
+          "name": "whitelist",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "accountsProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -240,6 +255,21 @@
         {
           "name": "userAccount",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "whitelist",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "accountsProgram",
+          "isMut": false,
           "isSigner": false
         },
         {

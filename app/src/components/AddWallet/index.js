@@ -52,8 +52,9 @@ export const AddWallet = () => {
             const whiteListData = await program.account.whiteList.fetch(whiteListKey);
             const configData = await program.account.config.fetch(configAccountKey);
             console.log(configData, whiteListData)
+            console.log("Owner: ", configData.authority.toBase58())
             const counter = configData.counter;
-            for (let i = 0; i < counter; i++) {
+            for (let i = 0; i < 10; i++) {
                 console.log("Account List: ", whiteListData.addresses[i].toBase58())
             }
         } catch (err) {
@@ -61,7 +62,7 @@ export const AddWallet = () => {
         }
     }
     
-    // Enter depositing
+    // Add wallet as Owner
     const add_wallet = async () => {
         const authority = wallet.publicKey;    
 
@@ -91,6 +92,33 @@ export const AddWallet = () => {
 
         console.log("End transaction")
     }
+
+    const update_owner = async () => {
+        const authority = wallet.publicKey;    
+
+        const provider = await getProvider();
+        anchor.setProvider(provider);
+        // address of deployed program
+        const programId = new PublicKey(idl.metadata.address);    
+        // Generate the program client from IDL.
+        const program = new anchor.Program(idl, programId);                
+
+        const newWallet = new PublicKey(accountKey);
+        try {
+            await program.rpc.updateConfig(newWallet, {
+                accounts: {
+                    authority,
+                    config: configAccountKey
+                }
+            })
+
+            await getInfo();
+        } catch (err) {
+            console.log(err);
+        }
+
+        console.log("End transaction")
+    }
     
     return (
         <div>  
@@ -101,6 +129,9 @@ export const AddWallet = () => {
             <div>
                 <button onClick={ () => add_wallet() }>
                     Register Account
+                </button>
+                <button onClick={ () => update_owner() }>
+                    Update Owner
                 </button>
             </div>
         </div>

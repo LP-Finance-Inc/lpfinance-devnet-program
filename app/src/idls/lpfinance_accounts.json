@@ -91,6 +91,27 @@
           "type": "publicKey"
         }
       ]
+    },
+    {
+      "name": "updateConfig",
+      "accounts": [
+        {
+          "name": "config",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "newAuthority",
+          "type": "publicKey"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -132,7 +153,7 @@
             "type": {
               "array": [
                 "publicKey",
-                5000
+                500
               ]
             }
           }

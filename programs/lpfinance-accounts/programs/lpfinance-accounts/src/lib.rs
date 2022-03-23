@@ -3,7 +3,7 @@ use std::ops::DerefMut;
 
 declare_id!("CaBy6Mh16bVQpnqY7Crt13hU4Zyv8QbW55GfTvVFwxYh");
 
-const MAX_LEN: usize = 5000;
+const MAX_LEN: usize = 500;
 
 #[program]
 pub mod lpfinance_accounts {
@@ -49,13 +49,16 @@ pub mod lpfinance_accounts {
             return Err(ErrorCode::NotEnoughSpace.into());
         }        
 
-        msg!("counter: {}", counter);
+        msg!("counter: {}, {}", counter, length);
         for i in 0..length {
+            msg!("new counter2");
             if whitelist.addresses.contains(&addresses[i]) {
                 return Err(ErrorCode::AlreadyExist.into());
             }
+            msg!("new counter3");
             whitelist.addresses[counter + i] = addresses[i];
         }
+        msg!("new counter1");
 
         config.counter = counter as u16 + addresses.len() as u16;
         msg!("new counter: {}", config.counter);
@@ -86,7 +89,7 @@ pub mod lpfinance_accounts {
         if whitelist.addresses.contains(&address) {
             return Err(ErrorCode::AlreadyExist.into());
         }
-        whitelist.addresses[counter + 1] = address;
+        whitelist.addresses[counter] = address;
 
         config.counter = counter as u16 + 1;
         msg!("new counter: {}", config.counter);
@@ -99,7 +102,7 @@ pub mod lpfinance_accounts {
         new_authority: Pubkey
     ) -> Result<()> {
         let config_account = &mut ctx.accounts.config;
-        if !config_account.authority.eq(&new_authority){
+        if ctx.accounts.authority.key() == new_authority {
             return Err(ErrorCode::AlreadyExist.into());
         }
         config_account.authority = new_authority;
@@ -125,7 +128,7 @@ pub struct Initialize<'info> {
     )]
     pub config: Box<Account<'info, Config>>,
     #[account(zero)]
-    whitelist: AccountLoader<'info, WhiteList>,
+    pub whitelist: AccountLoader<'info, WhiteList>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>
 }
@@ -143,24 +146,24 @@ pub struct Config {
 #[derive(Accounts)]
 pub struct AddWhiteListAddresses<'info> {
     #[account(mut, has_one = authority)]
-    config: Account<'info, Config>,
+    pub config: Box<Account<'info, Config>>,
     #[account(mut)]
-    whitelist: AccountLoader<'info, WhiteList>,
-    authority: Signer<'info>
+    pub whitelist: AccountLoader<'info, WhiteList>,
+    pub authority: Signer<'info>
 }
 
 #[derive(Accounts)]
 pub struct AddFromCbsProgram<'info> {
     #[account(mut, has_one = cbsprogram)]
-    config: Account<'info, Config>,
+    pub config: Box<Account<'info, Config>>,
     #[account(mut)]
-    whitelist: AccountLoader<'info, WhiteList>,
-    cbsprogram: AccountInfo<'info>
+    pub whitelist: AccountLoader<'info, WhiteList>,
+    pub cbsprogram: AccountInfo<'info>
 }
 
 #[account(zero_copy)]
 pub struct WhiteList {
-    pub addresses: [Pubkey; 5000]
+    pub addresses: [Pubkey; 500]
 }
 
 #[error_code]

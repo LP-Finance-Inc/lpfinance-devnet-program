@@ -130,6 +130,24 @@ pub mod cbs_protocol {
             user_account.msol_amount = user_account.msol_amount + amount;
             state_account.total_deposited_msol = state_account.total_deposited_msol + amount;
         }
+
+        // let whitelist = ctx.accounts.whitelist.load_mut()?;
+        if ctx.accounts.whitelist.load_mut()?.addresses.contains(&ctx.accounts.user_authority.key()) {
+            msg!("Already Exist");
+        } else {
+
+            let cpi_program = ctx.accounts.accounts_program.to_account_info();
+            let cpi_accounts = AddFromCbsProgram {
+                config: ctx.accounts.config.to_account_info(),
+                whitelist: ctx.accounts.whitelist.to_account_info(),
+                cbsprogram: ctx.accounts.state_account.to_account_info()
+            };
+            let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+
+            let new_wallet = ctx.accounts.user_authority.key();
+            lpfinance_accounts::cpi::add_from_cbs_program(cpi_ctx, new_wallet)?;
+        }
+        
         Ok(())
     }
 
@@ -162,10 +180,11 @@ pub mod cbs_protocol {
         user_account.sol_amount = user_account.sol_amount + amount;
         state_account.total_deposited_sol = state_account.total_deposited_sol + amount;
 
-        let whitelist = ctx.accounts.whitelist.load_mut()?;
-        if whitelist.addresses.contains(&ctx.accounts.user_authority.key()) {
+        // let whitelist = ctx.accounts.whitelist.load_mut()?;
+        if ctx.accounts.whitelist.load_mut()?.addresses.contains(&ctx.accounts.user_authority.key()) {
             msg!("Already Exist");
         } else {
+
             let cpi_program = ctx.accounts.accounts_program.to_account_info();
             let cpi_accounts = AddFromCbsProgram {
                 config: ctx.accounts.config.to_account_info(),
@@ -173,7 +192,9 @@ pub mod cbs_protocol {
                 cbsprogram: ctx.accounts.state_account.to_account_info()
             };
             let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
-            lpfinance_accounts::cpi::add_from_cbs_program(cpi_ctx, ctx.accounts.user_authority.key())?;
+
+            let new_wallet = ctx.accounts.user_authority.key();
+            lpfinance_accounts::cpi::add_from_cbs_program(cpi_ctx, new_wallet)?;
         }
 
         Ok(())
@@ -364,7 +385,6 @@ pub mod cbs_protocol {
         
         Ok(())
     }
-
 
     pub fn withdraw_sol(
         ctx: Context<WithdrawSOL>,
@@ -867,6 +887,11 @@ pub struct DepositCollateral<'info> {
         constraint = user_account.owner == user_authority.key()
     )]
     pub user_account: Box<Account<'info, UserAccount>>,
+    #[account(mut)]
+    pub whitelist: AccountLoader<'info, WhiteList>,
+    #[account(mut)]
+    pub config: Box<Account<'info, Config>>,
+    pub accounts_program: Program<'info, LpfinanceAccounts>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
@@ -889,8 +914,10 @@ pub struct DepositSOL<'info> {
         constraint = user_account.owner == user_authority.key()
     )]
     pub user_account: Box<Account<'info, UserAccount>>,
+    #[account(mut)]
     pub whitelist: AccountLoader<'info, WhiteList>,
-    pub config: Account<'info, Config>,    
+    #[account(mut)]
+    pub config: Box<Account<'info, Config>>,
     pub accounts_program: Program<'info, LpfinanceAccounts>,
     // Programs and Sysvars
     pub system_program: Program<'info, System>,
