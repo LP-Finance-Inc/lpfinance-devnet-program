@@ -53,7 +53,7 @@ export const readUserAccount = async (provider, publicKey) => {
         const accountData = await program.account.userAccount.fetch(userAccount);
         return accountData;
     } catch (err) {
-        console.log(err)
+        // console.log(err)
         return null;
     }
 }

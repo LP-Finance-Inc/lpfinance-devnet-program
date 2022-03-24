@@ -388,6 +388,8 @@ export const BorrowComponent = () => {
                 console.log("Deposit Amount:", deposit_amount.toString())
 
                 console.log("Detail Info", userCollateral.toBase58(), collateralMint.toBase58(), collateralPool.toBase58(), poolBump, poolSeed)
+                const accountsProgram = new PublicKey(accounts_idl.metadata.address);
+
                 await program.rpc.depositCollateral(
                     deposit_amount, poolBump, poolSeed, {
                     accounts: {
@@ -396,7 +398,10 @@ export const BorrowComponent = () => {
                         collateralMint,
                         stateAccount,
                         collateralPool,
-                        userAccount,
+                        userAccount,                        
+                        whitelist: whiteListKey,
+                        config: configAccountKey,
+                        accountsProgram,
                         systemProgram: SystemProgram.programId,
                         tokenProgram: TOKEN_PROGRAM_ID,
                         rent: SYSVAR_RENT_PUBKEY

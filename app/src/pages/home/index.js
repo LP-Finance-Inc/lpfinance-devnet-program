@@ -19,10 +19,10 @@ export default function Home() {
                 {
                     publicKey ? 
                         <div>
-                            <AddWallet />
+                            {/* <AddWallet />
                             <Faucet />
                             <BorrowComponent /> 
-                            <Swap />
+                            <Swap /> */}
                             <Liqudate />
                             <WalletDisconnectButton /> 
                         </div>
