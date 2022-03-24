@@ -303,7 +303,7 @@ export const Liqudate = () => {
         }
     }
 
-    const liquidate = async () => {
+    const liquidate = async (userKey) => {
         try {
             const auctionLpusd = poolLpusd;
             const auctionLpsol = poolLpsol;
@@ -405,7 +405,7 @@ export const Liqudate = () => {
                 <button onClick={ withdraw_lpusd } >
                     Withdraw
                 </button>
-                <button onClick={ liquidate } >
+                <button onClick={() => liquidate(userKey) } >
                     Liquidate
                 </button>
             </div>
