@@ -228,7 +228,7 @@ export const Liqudate = () => {
 
     }
     
-    const liquidate = async () => {
+    const liquidate = async (userKey) => {
         try {
             const auctionLpusd = poolLpusd;
             const auctionLpsol = poolLpsol;
@@ -262,8 +262,9 @@ export const Liqudate = () => {
             // Generate the program client from cbs_idl.
             const program = new anchor.Program(cbs_idl, programId);
             
+            const liquidatorKey = new PublicKey(userKey);
             const [userAccount, userAccountBump] = await PublicKey.findProgramAddress(
-                [Buffer.from(CBS_Contants.cbs_name), Buffer.from(userAuthority.toBuffer())],
+                [Buffer.from(CBS_Contants.cbs_name), Buffer.from(liquidatorKey.toBuffer())],
                 program.programId
             );
             const liquidator = userAccount;
@@ -287,7 +288,7 @@ export const Liqudate = () => {
                     swapMsol,
                     // btcMint,
                     // usdcMint,
-                    // lpsolMint,
+                    lpsolMint,
                     lpusdMint,
                     auctionLpusd,
                     auctionLpsol,
