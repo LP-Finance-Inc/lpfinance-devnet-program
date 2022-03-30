@@ -6,9 +6,9 @@ The LP Finance protocol is open source with a focus on developer friendliness an
 
 ## LP Finance Program Structure
 
-1. [lpfinance token program](https://github.com/LP-Finance-Inc/lpfinance-devnet-program/tree/main/programs/lpfinance-tokens) to mint/burn LpFinance Tokens including governance token as well as LpBTC, LpSOL, LpUSD.
+1. [lpfinance token program](https://github.com/LP-Finance-Inc/lpfinance-devnet-program/tree/main/programs/lpfinance-tokens) to mint/burn LPFi(LP Finance DAO) token as well as CBS Tokens (lpBTC, lpSOL, lpUSD).
 LP Finance Program has been configured with several programs
-2. [cbs program](https://github.com/LP-Finance-Inc/lpfinance-devnet-program/tree/main/programs/cbs-protocol) to deposit collaterals and borrow lpfinance tokens (LpBTC, LpSOL, LpUSD).
+2. [cbs program](https://github.com/LP-Finance-Inc/lpfinance-devnet-program/tree/main/programs/cbs-protocol) to deposit collaterals and borrow CBS Tokens (lpBTC, lpSOL, lpUSD).
 3. [LpFi staking program](https://github.com/LP-Finance-Inc/lpfinance-devnet-program/tree/main/programs/lpfinace-staking) to stake LPFI(LP Finance DAO) token and get daily reward.
 4. [Lpfinance auction program](https://github.com/LP-Finance-Inc/lpfinance-devnet-program/tree/main/programs/lpusd-auction) to liquidate the collaterals and give interest reward.
 ## Development
