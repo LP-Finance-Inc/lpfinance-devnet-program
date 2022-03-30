@@ -1,5 +1,5 @@
 # LP Finance Program
-LP Finance is a decentralized synthetic asset protocol on Solana. LP Finance Protocol allows users to earn interest on supplied tokens and borrow USD and SOL, BTC pegged stablecoin interest-free.
+LP Finance is a decentralized synthetic asset protocol on Solana. LP Finance Protocol allows users to earn interest on supplied tokens and borrow USD and SOL, BTC pegged synthetic asset interest-free.
 
 ## Contributing/Building
 The LP Finance protocol is open source with a focus on developer friendliness and integrations.
