@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "update-idl": "cp ./target/idl/cbs_protocol.json ../../app/src/idls/cbs_protocol.json"
+        "update-idl": "cp ./target/idl/cbs_protocol.json ../../../devnet-app-v1/src/idls/cbs_protocol.json"
     },
     "dependencies": {
         "@project-serum/anchor": "^0.22.0",

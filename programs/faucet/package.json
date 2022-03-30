@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "update-idl": "cp ./target/idl/faucet.json ../../app/src/idls/faucet.json"
+        "update-idl": "cp ./target/idl/faucet.json ../../../devnet-app-v1/src/idls/faucet.json"
     },
     "dependencies": {
         "@project-serum/anchor": "^0.22.0",
