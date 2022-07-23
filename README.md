@@ -1,4 +1,5 @@
 # LP Finance Program
+#### This repo is deprecated. Most up to date development can be found [here](https://github.com/LP-Finance-Inc/lpfinance-devnet-solana)
 LP Finance is a decentralized synthetic asset protocol on Solana. LP Finance Protocol allows users to earn interest on supplied tokens and borrow USD and SOL, BTC pegged synthetic asset interest-free.
 
 ## Contributing/Building
